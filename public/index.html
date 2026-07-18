@@ -1,0 +1,64 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="description" content="AI-консультант по подбору комплектующих компьютера" />
+  <title>AI-консультант по сборке ПК</title>
+  <link rel="stylesheet" href="/styles.css" />
+</head>
+<body>
+  <main class="app-shell">
+    <header class="topbar">
+      <div>
+        <h1>AI-консультант по сборке ПК</h1>
+        <p>Учебная подборка по каталогу DNS.ru</p>
+      </div>
+      <button id="settingsButton" class="icon-button" type="button" aria-label="Настройки" title="Настройки">⚙</button>
+    </header>
+
+    <section id="chat" class="chat" aria-live="polite"></section>
+
+    <form id="chatForm" class="composer">
+      <textarea id="messageInput" rows="1" maxlength="6000" placeholder="Напишите бюджет, задачи и пожелания…" required></textarea>
+      <button id="sendButton" type="submit">Отправить</button>
+    </form>
+    <p class="disclaimer">Цены и наличие уточняйте на DNS.ru для своего города. Консультант не оформляет заказ.</p>
+  </main>
+
+  <dialog id="settingsDialog">
+    <form id="settingsForm" method="dialog" class="settings-card">
+      <div class="settings-title-row">
+        <h2>Настройки RouterAI</h2>
+        <button id="closeSettings" class="icon-button" type="button" aria-label="Закрыть">×</button>
+      </div>
+
+      <label>
+        API-ключ RouterAI
+        <input id="apiKeyInput" type="password" autocomplete="off" placeholder="Введите ключ" />
+      </label>
+
+      <label>
+        Модель
+        <select id="modelSelect">
+          <option value="deepseek/deepseek-v4-pro">DeepSeek V4 Pro — по умолчанию</option>
+          <option value="qwen/qwen3.5-35b-a3b">Qwen3.5 35B A3B — экономичная</option>
+          <option value="openai/gpt-5.6-luna">GPT-5.6 Luna — сбалансированная</option>
+          <option value="anthropic/claude-sonnet-5">Claude Sonnet 5 — премиальная</option>
+          <option value="custom">Другая модель…</option>
+        </select>
+      </label>
+
+      <label id="customModelLabel" hidden>
+        ID модели RouterAI
+        <input id="customModelInput" type="text" placeholder="provider/model-id" />
+      </label>
+
+      <p class="settings-hint">Ключ и модель сохраняются только в localStorage этого браузера. Для учебного проекта это выполняет требование сохранения настроек после перезагрузки.</p>
+      <button class="primary" type="submit">Сохранить</button>
+    </form>
+  </dialog>
+
+  <script src="/app.js" defer></script>
+</body>
+</html>
