@@ -104,7 +104,7 @@
 - Материнские платы B650E: https://www.dns-shop.ru/catalog/17a89a0416404e77/materinskie-platy/?f%5Bchipset%5D=b650e
 - Материнские платы X870: https://www.dns-shop.ru/catalog/17a89a0416404e77/materinskie-platy/?f%5Bchipset%5D=x870
 - Видеокарты: https://www.dns-shop.ru/catalog/17a89aab16404e77/videokarty/
-- Оперативная память: https://www.dns-shop.ru/catalog/17a89ee416404e77/operativnaya-pamyat-dimm/
+- Оперативная память DDR4/DDR5 (поиск): https://www.dns-shop.ru/search/?q=оперативная+память+DIMM
 - SSD M.2: https://www.dns-shop.ru/search/?q=SSD+накопитель
 - HDD: https://www.dns-shop.ru/catalog/9d1ae3293bac7fd7/zestkie-diski-hdd/
 - Блоки питания: https://www.dns-shop.ru/catalog/17a89c2216404e77/bloki-pitaniya/
