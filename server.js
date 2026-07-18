@@ -31,7 +31,7 @@ app.listen(config.port, '0.0.0.0', () => {
   console.log(`DNS PC AI Consultant: http://0.0.0.0:${config.port}`);
   console.log(`Публичный режим: ${config.runtime.publicMode}; модель: ${config.runtime.model}`);
   console.log(`База знаний: ${kb.files.join(', ')}; разделов: ${kb.sections}`);
-  console.log(`Автообновление DNS-ссылок: ${config.dnsLinkAutoUpdate ? `включено, ${config.dnsLinkUpdateHourUtc}:00 UTC` : 'выключено'}`);
+  console.log('DNS-ссылки: серверная автопроверка отключена; используются браузерные поисковые fallback-ссылки.');
   if (!config.routerApiKey) console.warn('ROUTERAI_API_KEY не задан: публичный чат работать не будет.');
   if (config.sessionSecret.length < 32) console.warn('SESSION_SECRET не задан или короче 32 символов: вход администратора отключён.');
   if (!config.adminPasswordHash && config.adminPassword) console.warn('Используется ADMIN_PASSWORD без хеша. Для публикации задайте ADMIN_PASSWORD_HASH.');
