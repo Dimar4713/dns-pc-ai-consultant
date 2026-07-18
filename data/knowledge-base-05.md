@@ -109,6 +109,7 @@
 - HDD: https://www.dns-shop.ru/catalog/9d1ae3293bac7fd7/zestkie-diski-hdd/
 - Блоки питания: https://www.dns-shop.ru/catalog/17a89c2216404e77/bloki-pitaniya/
 - Корпуса: https://www.dns-shop.ru/catalog/17a89c5616404e77/korpusa/
+- Корпуса с блоком питания (поиск): https://www.dns-shop.ru/search/?q=корпус+с+блоком+питания
 - Кулеры для процессора: https://www.dns-shop.ru/catalog/17a9cc2d16404e77/kulery-dlya-processora/
 - Вентиляторы для корпуса: https://www.dns-shop.ru/catalog/17a9cf0216404e77/ventilatory-dla-korpusa/
 - Мониторы: https://www.dns-shop.ru/catalog/17a8943716404e77/monitory/
