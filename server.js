@@ -56,7 +56,7 @@ function splitKnowledgeBase(markdown) {
   const sections = markdown.split(/\n(?=##?\s)/g).map((part) => part.trim()).filter(Boolean);
   return sections.map((text, index) => {
     const title = text.match(/^#{1,3}\s+(.+)$/m)?.[1] || `Раздел ${index + 1}`;
-    return { title, text };
+    return { id: index, title, text };
   });
 }
 
@@ -67,25 +67,160 @@ const alwaysIncludeTitles = [
   'Ограничения данных и честность консультанта'
 ];
 
-function selectKnowledge(messages, limit = 7) {
-  const recentText = messages.slice(-8).map((m) => m.content).join(' ');
+const categoryRoutes = [
+  {
+    id: 'memory',
+    aliases: ['оперативн', 'озу', 'ram', 'ddr3', 'ddr4', 'ddr5', 'dimm', 'so-dimm', 'sodimm', 'тайминг', 'xmp', 'expo', 'памят', '16 гб', '32 гб', '64 гб', '128 гб'],
+    titles: ['оперативная память', 'память dimm', 'примеры оперативной памяти']
+  },
+  {
+    id: 'monitor',
+    aliases: ['монитор', 'экран', 'дисплей', 'герц', 'гц', 'full hd', '1080p', '1440p', '2k', '4k', 'ultrawide', 'oled', 'vesa'],
+    titles: ['мониторы', 'соответствие монитора']
+  },
+  {
+    id: 'storage',
+    aliases: ['ssd', 'hdd', 'nvme', 'накопител', 'диск', 'm.2', 'sata', 'хранилищ', 'архив'],
+    titles: ['накопители', 'ssd', 'hdd']
+  },
+  {
+    id: 'peripherals',
+    aliases: ['клавиатур', 'мыш', 'веб камер', 'веб-камер', 'гарнитур', 'наушник', 'микрофон', 'колонк', 'перифери'],
+    titles: ['периферия и сетевые устройства', 'проверка периферии']
+  },
+  {
+    id: 'network',
+    aliases: ['wi-fi', 'wifi', 'вай фай', 'bluetooth', 'блютуз', 'сетев', 'ethernet', 'адаптер'],
+    titles: ['периферия и сетевые устройства', 'wi-fi и bluetooth']
+  },
+  {
+    id: 'audio',
+    aliases: ['звук', 'аудио', 'asio', 'цап', 'звуковая карта', 'аудиоинтерфейс'],
+    titles: ['периферия и сетевые устройства', 'звуковые карты']
+  },
+  {
+    id: 'cooling',
+    aliases: ['кулер', 'охлажден', 'вентилятор', 'термопаст', 'сжо', 'радиатор', 'pwm', 'argb'],
+    titles: ['систем охлаждения', 'дополнительные комплектующие', 'корпусные вентиляторы']
+  },
+  {
+    id: 'power',
+    aliases: ['блок питания', 'бп', 'psu', 'ибп', 'ups', 'сетевой фильтр', 'розетк', '12vhpwr', '12v-2x6'],
+    titles: ['блоков питания', 'дополнительные комплектующие', 'ибп и сетевые фильтры']
+  },
+  {
+    id: 'platform',
+    aliases: ['процессор', 'cpu', 'материн', 'плата', 'сокет', 'чипсет', 'bios', 'ам4', 'ам5', 'am4', 'am5', 'lga'],
+    titles: ['процессор', 'материнск', 'критические правила совместимости']
+  },
+  {
+    id: 'graphics',
+    aliases: ['видеокарт', 'gpu', 'график', 'rtx', 'radeon', 'rx ', 'vram', 'видеопамят'],
+    titles: ['видеокарт']
+  },
+  {
+    id: 'case',
+    aliases: ['корпус', 'форм фактор', 'форм-фактор', 'atx', 'microatx', 'mini-itx', 'габарит'],
+    titles: ['корпус', 'материнская плата и корпус']
+  }
+];
+
+const fullSetAliases = [
+  'под ключ',
+  'полный комплект',
+  'полное рабочее место',
+  'рабочее место',
+  'компьютер целиком',
+  'все вместе',
+  'с монитором',
+  'с периферией'
+];
+
+function includesAlias(normalizedText, alias) {
+  return normalizedText.includes(normalize(alias));
+}
+
+function detectRoutes(text) {
+  const normalizedText = normalize(text);
+  const ids = new Set();
+
+  for (const route of categoryRoutes) {
+    if (route.aliases.some((alias) => includesAlias(normalizedText, alias))) {
+      ids.add(route.id);
+    }
+  }
+
+  if (fullSetAliases.some((alias) => includesAlias(normalizedText, alias))) {
+    ['monitor', 'peripherals', 'network', 'audio', 'power'].forEach((id) => ids.add(id));
+  }
+
+  return [...ids];
+}
+
+function sectionMatchesRoute(section, route) {
+  const normalizedTitle = normalize(section.title);
+  return route.titles.some((part) => normalizedTitle.includes(normalize(part)));
+}
+
+function selectKnowledge(messages, limit = 12, maxChars = 65000) {
+  const recentText = messages.slice(-10).map((m) => m.content).join(' ');
   const queryTokens = new Set(tokenize(recentText));
+  const matchedRouteIds = detectRoutes(recentText);
+  const matchedRoutes = categoryRoutes.filter((route) => matchedRouteIds.includes(route.id));
 
   const scored = kbSections.map((section) => {
     const sectionTokens = tokenize(`${section.title} ${section.text}`);
     let score = 0;
+
     for (const token of sectionTokens) {
       if (queryTokens.has(token)) score += token.length > 7 ? 3 : 1;
     }
-    if (alwaysIncludeTitles.some((title) => section.title.includes(title))) score += 100;
-    return { ...section, score };
+
+    const mandatory = alwaysIncludeTitles.some((title) => section.title.includes(title));
+    const routeHits = matchedRoutes.filter((route) => sectionMatchesRoute(section, route));
+
+    if (mandatory) score += 500;
+    if (routeHits.length) score += 900 + routeHits.length * 100;
+
+    return {
+      ...section,
+      score,
+      mandatory,
+      routeHits: routeHits.map((route) => route.id)
+    };
   });
 
-  return scored
-    .sort((a, b) => b.score - a.score)
-    .slice(0, limit)
-    .map((section) => section.text)
-    .join('\n\n---\n\n');
+  const ordered = scored.sort((a, b) => {
+    if (b.score !== a.score) return b.score - a.score;
+    return a.id - b.id;
+  });
+
+  const selected = [];
+  let totalChars = 0;
+
+  for (const section of ordered) {
+    const mustTake = section.mandatory || section.routeHits.length > 0;
+    if (!mustTake && selected.length >= limit) continue;
+    if (!mustTake && section.score <= 0) continue;
+
+    const separatorLength = selected.length ? 9 : 0;
+    const nextLength = section.text.length + separatorLength;
+    if (totalChars + nextLength > maxChars && !mustTake) continue;
+
+    selected.push(section);
+    totalChars += nextLength;
+
+    if (selected.length >= limit && !ordered.some((item) =>
+      !selected.some((current) => current.id === item.id) && (item.mandatory || item.routeHits.length > 0))) {
+      break;
+    }
+  }
+
+  return {
+    text: selected.map((section) => section.text).join('\n\n---\n\n'),
+    categories: matchedRouteIds,
+    sections: selected.map((section) => section.title)
+  };
 }
 
 function sanitizeMessages(messages) {
@@ -105,7 +240,8 @@ app.get('/api/health', (_req, res) => {
     ok: true,
     service: 'dns-pc-ai-consultant',
     knowledgeFiles: loadedKnowledge.files,
-    knowledgeSections: kbSections.length
+    knowledgeSections: kbSections.length,
+    categoryRoutes: categoryRoutes.map((route) => route.id)
   });
 });
 
@@ -122,8 +258,11 @@ app.post('/api/chat', async (req, res) => {
     return res.status(400).json({ error: 'Отсутствует сообщение пользователя.' });
   }
 
-  const relevantKnowledge = selectKnowledge(messages);
-  const systemPrompt = `${baseSystemPrompt}\n\n# РЕЛЕВАНТНЫЕ ФРАГМЕНТЫ БАЗЫ ЗНАНИЙ\n${relevantKnowledge}`;
+  const selectedKnowledge = selectKnowledge(messages);
+  const routingNote = selectedKnowledge.categories.length
+    ? `\n\n# ОПРЕДЕЛЕННЫЕ КАТЕГОРИИ ЗАПРОСА\n${selectedKnowledge.categories.join(', ')}`
+    : '';
+  const systemPrompt = `${baseSystemPrompt}${routingNote}\n\n# РЕЛЕВАНТНЫЕ ФРАГМЕНТЫ БАЗЫ ЗНАНИЙ\n${selectedKnowledge.text}`;
 
   try {
     const upstream = await fetch(`${ROUTERAI_BASE_URL}/chat/completions`, {
@@ -163,7 +302,11 @@ app.post('/api/chat', async (req, res) => {
       return res.status(502).json({ error: `Модель не вернула текстовый ответ.${hint}` });
     }
 
-    res.json({ answer, model: payload?.model || model });
+    res.json({
+      answer,
+      model: payload?.model || model,
+      knowledgeCategories: selectedKnowledge.categories
+    });
   } catch (error) {
     console.error('RouterAI request failed:', error?.message || error);
     res.status(502).json({ error: 'Не удалось обратиться к RouterAI. Проверьте сеть, ключ и выбранную модель.' });
