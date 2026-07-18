@@ -25,10 +25,7 @@
 
     <section id="dashboard" class="dashboard" hidden>
       <header class="admin-header">
-        <div>
-          <h1>Панель управления</h1>
-          <p id="adminIdentity"></p>
-        </div>
+        <div><h1>Панель управления</h1><p id="adminIdentity"></p></div>
         <div class="header-actions">
           <a href="/" target="_blank" rel="noopener">Открыть демо</a>
           <button id="logoutButton" class="secondary" type="button">Выйти</button>
@@ -71,10 +68,11 @@
       </section>
 
       <section class="panel">
-        <div class="panel-title"><div><h2>Диагностика</h2><p>Проверка конфигурации и обновление базы знаний без перезапуска.</p></div></div>
+        <div class="panel-title"><div><h2>Диагностика и база</h2><p>Проверка конфигурации, базы знаний и ссылок DNS.</p></div></div>
         <div class="action-row">
           <button id="selfTestButton" type="button">Проверить конфигурацию</button>
           <button id="reloadKbButton" class="secondary" type="button">Перезагрузить базу знаний</button>
+          <button id="updateLinksButton" class="secondary" type="button">Проверить и обновить ссылки DNS</button>
           <button id="refreshButton" class="secondary" type="button">Обновить метрики</button>
         </div>
         <pre id="diagnosticsOutput">Диагностика ещё не запускалась.</pre>
