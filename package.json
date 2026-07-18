@@ -3,6 +3,13 @@
   "version": "1.0.0",
   "private": true,
   "description": "Пилотный AI-консультант по подбору комплектующих DNS.ru для Replit и RouterAI.ru",
+  "author": "Dmitry Marareskul",
+  "license": "Apache-2.0",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Dimar4713/dns-pc-ai-consultant.git"
+  },
+  "homepage": "https://github.com/Dimar4713/dns-pc-ai-consultant#readme",
   "type": "commonjs",
   "scripts": {
     "start": "node server.js",
