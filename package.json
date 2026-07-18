@@ -12,6 +12,7 @@
   "homepage": "https://github.com/Dimar4713/dns-pc-ai-consultant#readme",
   "type": "commonjs",
   "scripts": {
+    "build": "node -e \"console.log('No build step required')\"",
     "start": "node server.js",
     "dev": "node --watch server.js",
     "test": "node scripts/smoke-test.js",
