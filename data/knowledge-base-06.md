@@ -68,13 +68,13 @@
 
 | Модель | Параметры | Назначение | Цена | Страница DNS |
 |---|---|---|---|---|
-| Kingston A400 SA400S37/960G | 960 ГБ, SATA, чтение до 500 МБ/с, запись до 450 МБ/с, TBW 300 ТБ | Апгрейд старого ПК, второй накопитель | проверить | [Связанные товары DNS](https://www.dns-shop.ru/product/buy-together/e41e28fb4ba0ed20/2-tb-zestkij-disk-wd-blue-wd20earz/) · [Поиск DNS: Связанные товары](https://www.dns-shop.ru/search/?q=%D0%A1%D0%B2%D1%8F%D0%B7%D0%B0%D0%BD%D0%BD%D1%8B%D0%B5%20%D1%82%D0%BE%D0%B2%D0%B0%D1%80%D1%8B) |
+| Kingston A400 SA400S37/960G | 960 ГБ, SATA, чтение до 500 МБ/с, запись до 450 МБ/с, TBW 300 ТБ | Апгрейд старого ПК, второй накопитель | проверить | [Поиск DNS: Kingston A400 SA400S37/960G](https://www.dns-shop.ru/search/?q=Kingston+A400+SA400S37%2F960G) |
 | SATA SSD 1–2 ТБ | 2.5", SATA III | Когда нет свободного M.2 или нужен недорогой тихий диск | проверить | [Каталог SSD](https://www.dns-shop.ru/catalog/17a9d6ff16404e77/ssd-nakopiteli/) |
 
 ### Дополнительные NVMe
 
 | Модель | Параметры | Назначение | Цена | Страница DNS |
 |---|---|---|---|---|
-| WD Black SN7100 WDS100T4X0E | 1 ТБ, PCIe 4.0×4, до 7250/6900 МБ/с, TLC, TBW 600 ТБ | Быстрый системный и игровой SSD | проверить | [Связанные товары DNS](https://www.dns-shop.ru/product/buy-together/f756fdd969e53332/2-tb-zestkij-disk-wd-blue-wd20ezbx/) · [Поиск DNS: Связанные товары](https://www.dns-shop.ru/search/?q=%D0%A1%D0%B2%D1%8F%D0%B7%D0%B0%D0%BD%D0%BD%D1%8B%D0%B5%20%D1%82%D0%BE%D0%B2%D0%B0%D1%80%D1%8B) |
+| WD Black SN7100 WDS100T4X0E | 1 ТБ, PCIe 4.0×4, до 7250/6900 МБ/с, TLC, TBW 600 ТБ | Быстрый системный и игровой SSD | проверить | [Поиск DNS: WD Black SN7100 WDS100T4X0E](https://www.dns-shop.ru/search/?q=WD+Black+SN7100+WDS100T4X0E) |
 | Kingston NV3 1 ТБ | PCIe 4.0×4 | Бюджетный системный NVMe | ориентир есть в основной базе | [Каталог SSD](https://www.dns-shop.ru/catalog/17a9d6ff16404e77/ssd-nakopiteli/) |
 | Samsung 990 Pro 1 ТБ | PCIe 4.0×4 | Производительный рабочий диск | ориентир есть в основной базе | [Каталог SSD](https://www.dns-shop.ru/catalog/17a9d6ff16404e77/ssd-nakopiteli/) |
