@@ -1,0 +1,18 @@
+{
+  "name": "dns-pc-ai-consultant",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Учебный AI-консультант по подбору комплектующих DNS.ru для Replit и RouterAI.ru",
+  "type": "commonjs",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node --watch server.js",
+    "test": "node scripts/smoke-test.js"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "dependencies": {
+    "express": "^4.21.2"
+  }
+}
