@@ -23,6 +23,7 @@ const keyStatus = document.querySelector('#keyStatus');
 const statusBanner = document.querySelector('#statusBanner');
 const selfTestButton = document.querySelector('#selfTestButton');
 const reloadKbButton = document.querySelector('#reloadKbButton');
+const updateLinksButton = document.querySelector('#updateLinksButton');
 const refreshButton = document.querySelector('#refreshButton');
 const diagnosticsOutput = document.querySelector('#diagnosticsOutput');
 
@@ -183,6 +184,21 @@ reloadKbButton.addEventListener('click', async () => {
     showBanner(error.message, true);
   } finally {
     reloadKbButton.disabled = false;
+  }
+});
+
+updateLinksButton.addEventListener('click', async () => {
+  updateLinksButton.disabled = true;
+  diagnosticsOutput.textContent = 'Проверяю ссылки DNS. Это может занять несколько минут…';
+  try {
+    const result = await api('/api/admin/update-links', { method: 'POST' });
+    diagnosticsOutput.textContent = JSON.stringify(result.report, null, 2);
+    showBanner(`Проверено ${result.report.checked}; обновлено ${result.report.updated}; требуют проверки ${result.report.unresolved}.`, result.report.errors > 0);
+  } catch (error) {
+    diagnosticsOutput.textContent = error.message;
+    showBanner(error.message, true);
+  } finally {
+    updateLinksButton.disabled = false;
   }
 });
 
