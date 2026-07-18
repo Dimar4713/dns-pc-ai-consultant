@@ -31,6 +31,7 @@
 
 ### ИБП и сетевые фильтры
 
+**ИБП (поиск DNS):** https://www.dns-shop.ru/search/?q=ИБП+источник+бесперебойного+питания
 **Сетевые фильтры:** https://www.dns-shop.ru/catalog/recipe/f196b7008cbb03ef/setevye-filtry/
 
 Правила выбора ИБП:

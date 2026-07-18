@@ -80,11 +80,32 @@
 ## Источники
 
 - Категории комплектующих: https://www.dns-shop.ru/catalog/17a899cd16404e77/komplektuyushhie-dlya-pk/
-- Процессоры: https://www.dns-shop.ru/catalog/17a899cd16404e77/processory/
-- Материнские платы: https://www.dns-shop.ru/catalog/17a89a0416404e77/materinskie-platy/
+- Процессоры (все): https://www.dns-shop.ru/catalog/17a899cd16404e77/processory/
+- Процессоры Intel LGA1700: https://www.dns-shop.ru/catalog/17a899cd16404e77/processory/?socket=lga1700
+- Процессоры Intel LGA1851: https://www.dns-shop.ru/catalog/17a899cd16404e77/processory/?socket=lga1851
+- Процессоры AMD AM5: https://www.dns-shop.ru/catalog/17a899cd16404e77/processory/?socket=am5
+- Процессоры AMD AM4: https://www.dns-shop.ru/catalog/17a899cd16404e77/processory/?socket=am4
+- Материнские платы (все): https://www.dns-shop.ru/catalog/17a89a0416404e77/materinskie-platy/
+- Материнские платы Z790: https://www.dns-shop.ru/catalog/17a89a0416404e77/materinskie-platy/?chipset=z790
+- Материнские платы B760: https://www.dns-shop.ru/catalog/17a89a0416404e77/materinskie-platy/?chipset=b760
+- Материнские платы B650: https://www.dns-shop.ru/catalog/17a89a0416404e77/materinskie-platy/?chipset=b650
+- Материнские платы X670: https://www.dns-shop.ru/catalog/17a89a0416404e77/materinskie-platy/?chipset=x670
 - Видеокарты: https://www.dns-shop.ru/catalog/17a89aab16404e77/videokarty/
 - Оперативная память: https://www.dns-shop.ru/catalog/17a89ee416404e77/operativnaya-pamyat-dimm/
 - SSD M.2: https://www.dns-shop.ru/catalog/17a9d6ff16404e77/ssd-nakopiteli/
+- HDD: https://www.dns-shop.ru/catalog/9d1ae3293bac7fd7/zestkie-diski-hdd/
 - Блоки питания: https://www.dns-shop.ru/catalog/17a89c2216404e77/bloki-pitaniya/
 - Корпуса: https://www.dns-shop.ru/catalog/17a89c5616404e77/korpusa/
-- Кулеры: https://www.dns-shop.ru/catalog/17a9cc2d16404e77/kulery-dlya-processora/
+- Кулеры для процессора: https://www.dns-shop.ru/catalog/17a9cc2d16404e77/kulery-dlya-processora/
+- Вентиляторы для корпуса: https://www.dns-shop.ru/catalog/17a9cf0216404e77/ventilatory-dla-korpusa/
+- Мониторы: https://www.dns-shop.ru/catalog/17a8943716404e77/monitory/
+- Клавиатуры (поиск): https://www.dns-shop.ru/search/?q=клавиатура
+- Мыши (поиск): https://www.dns-shop.ru/search/?q=мышь+компьютерная
+- Наушники и гарнитуры: https://www.dns-shop.ru/catalog/17a9ef1716404e77/nausniki-i-garnitury/
+- Веб-камеры: https://www.dns-shop.ru/catalog/17a89d9b16404e77/veb-kamery/
+- Wi-Fi адаптеры: https://www.dns-shop.ru/catalog/17a9eac716404e77/adaptery-wi-fi/
+- Bluetooth адаптеры: https://www.dns-shop.ru/catalog/17a9ea9416404e77/adaptery-bluetooth/
+- ИБП (поиск): https://www.dns-shop.ru/search/?q=ИБП+источник+бесперебойного+питания
+- Звуковые карты: https://www.dns-shop.ru/catalog/17a89b4f16404e77/zvukovye-karty/
+
+Важно: никогда не придумывать ID категорий DNS самостоятельно — использовать только ссылки из этого раздела «Источники».
