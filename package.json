@@ -14,7 +14,8 @@
   "scripts": {
     "start": "node server.js",
     "dev": "node --watch server.js",
-    "test": "node scripts/smoke-test.js"
+    "test": "node scripts/smoke-test.js",
+    "hash-password": "node scripts/hash-admin-password.js"
   },
   "engines": {
     "node": ">=20"
