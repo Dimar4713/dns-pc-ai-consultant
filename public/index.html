@@ -3,10 +3,11 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <meta name="description" content="AI-консультант по подбору комплектующих компьютера" />
+  <meta name="description" content="Независимый демонстрационный AI-консультант по подбору совместимого компьютера" />
   <title>AI-консультант по сборке ПК</title>
   <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
   <link rel="stylesheet" href="/styles.css" />
+  <link rel="stylesheet" href="/public-mode.css" />
   <script src="https://cdn.jsdelivr.net/npm/marked@12/marked.min.js"></script>
 </head>
 <body>
@@ -16,80 +17,29 @@
         <div class="topbar-logo">🖥</div>
         <div>
           <h1>AI-консультант по сборке ПК</h1>
-          <p>Пилотная подборка по каталогу DNS.ru</p>
+          <p>Независимый демонстрационный прототип</p>
         </div>
       </div>
       <div class="topbar-actions">
-        <button id="newChatButton"  class="icon-button" type="button" aria-label="Новый диалог"      title="Новый диалог">🔄</button>
-        <button id="historyButton"  class="icon-button" type="button" aria-label="История диалогов"  title="История диалогов">🗂</button>
-        <button id="pdfButton"      class="icon-button" type="button" aria-label="Скачать PDF"        title="Скачать PDF">📄</button>
-        <button id="settingsButton" class="icon-button" type="button" aria-label="Настройки"          title="Настройки">⚙</button>
+        <span id="serviceStatus" class="service-status" title="Состояние сервиса">●</span>
+        <button id="newChatButton" class="icon-button" type="button" aria-label="Новый диалог" title="Новый диалог">🔄</button>
+        <button id="historyButton" class="icon-button" type="button" aria-label="История диалогов" title="История диалогов">🗂</button>
+        <button id="pdfButton" class="icon-button" type="button" aria-label="Скачать PDF" title="Скачать PDF">📄</button>
       </div>
     </header>
 
+    <section id="demoNotice" class="demo-notice" hidden></section>
+    <section id="examples" class="example-prompts" aria-label="Примеры запросов"></section>
     <section id="chat" class="chat" aria-live="polite"></section>
 
     <form id="chatForm" class="composer">
-      <textarea id="messageInput" rows="1" maxlength="6000" placeholder="Напишите бюджет, задачи и пожелания…" required></textarea>
+      <textarea id="messageInput" rows="1" maxlength="4000" placeholder="Напишите бюджет, задачи и пожелания…" required></textarea>
       <button id="sendButton" type="submit">Отправить</button>
     </form>
-    <p class="disclaimer">Цены и наличие уточняйте на DNS.ru для своего города. Консультант не оформляет заказ.</p>
+    <p class="disclaimer">
+      Цены и наличие уточняйте на DNS.ru для своего города. Проект не является официальным сервисом DNS и не оформляет заказы.
+    </p>
   </main>
-
-  <dialog id="settingsDialog">
-    <form id="settingsForm" method="dialog" class="settings-card">
-      <div class="settings-title-row">
-        <h2>Настройки RouterAI</h2>
-        <button id="closeSettings" class="icon-button" type="button" aria-label="Закрыть">×</button>
-      </div>
-
-      <label>
-        API-ключ RouterAI
-        <input id="apiKeyInput" type="password" autocomplete="off" placeholder="Введите ключ" />
-      </label>
-
-      <label>
-        Модель
-        <select id="modelSelect">
-          <option value="deepseek/deepseek-v4-pro">DeepSeek V4 Pro — по умолчанию</option>
-          <option value="qwen/qwen3.5-35b-a3b">Qwen3.5 35B A3B — экономичная</option>
-          <option value="openai/gpt-5.6-luna">GPT-5.6 Luna — сбалансированная</option>
-          <option value="anthropic/claude-sonnet-5">Claude Sonnet 5 — премиальная</option>
-          <option value="custom">Другая модель…</option>
-        </select>
-      </label>
-
-      <label id="customModelLabel" hidden>
-        ID модели RouterAI
-        <input id="customModelInput" type="text" placeholder="provider/model-id" />
-      </label>
-
-      <details class="settings-advanced">
-        <summary>Параметры генерации</summary>
-        <div class="settings-advanced-body">
-          <label>
-            Макс. токенов ответа
-            <div class="range-row">
-              <input id="maxTokensRange" type="range" min="500" max="8000" step="100" value="4000" />
-              <input id="maxTokensNumber" type="number" min="500" max="8000" step="100" value="4000" />
-            </div>
-            <span class="settings-hint">Для моделей с внутренним рассуждением (reasoning) рекомендуется ≥ 4000. По умолчанию: 4000.</span>
-          </label>
-          <label>
-            Температура (креативность)
-            <div class="range-row">
-              <input id="temperatureRange" type="range" min="0" max="1" step="0.05" value="0.25" />
-              <input id="temperatureNumber" type="number" min="0" max="1" step="0.05" value="0.25" />
-            </div>
-            <span class="settings-hint">0 — точные факты, 1 — разнообразие. По умолчанию: 0.25.</span>
-          </label>
-        </div>
-      </details>
-
-      <p class="settings-hint">Ключ и модель сохраняются только в localStorage этого браузера. Для пилотного проекта это выполняет требование сохранения настроек после перезагрузки.</p>
-      <button class="primary" type="submit">Сохранить</button>
-    </form>
-  </dialog>
 
   <dialog id="historyDialog" class="history-dialog">
     <div class="history-panel">
