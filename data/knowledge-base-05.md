@@ -86,10 +86,23 @@
 - Процессоры AMD AM5: https://www.dns-shop.ru/catalog/17a899cd16404e77/processory/?socket=am5
 - Процессоры AMD AM4: https://www.dns-shop.ru/catalog/17a899cd16404e77/processory/?socket=am4
 - Материнские платы (все): https://www.dns-shop.ru/catalog/17a89a0416404e77/materinskie-platy/
-- Материнские платы Z790: https://www.dns-shop.ru/catalog/17a89a0416404e77/materinskie-platy/?chipset=z790
-- Материнские платы B760: https://www.dns-shop.ru/catalog/17a89a0416404e77/materinskie-platy/?chipset=b760
-- Материнские платы B650: https://www.dns-shop.ru/catalog/17a89a0416404e77/materinskie-platy/?chipset=b650
-- Материнские платы X670: https://www.dns-shop.ru/catalog/17a89a0416404e77/materinskie-platy/?chipset=x670
+- Материнские платы AM4 microATX: https://www.dns-shop.ru/catalog/17a89a0416404e77/materinskie-platy/?f%5Bsocket%5D=am4&f%5Bff%5D=micro-atx
+- Материнские платы AM4 ATX: https://www.dns-shop.ru/catalog/17a89a0416404e77/materinskie-platy/?f%5Bsocket%5D=am4&f%5Bff%5D=atx
+- Материнские платы AM4 miniITX: https://www.dns-shop.ru/catalog/17a89a0416404e77/materinskie-platy/?f%5Bsocket%5D=am4&f%5Bff%5D=mini-itx
+- Материнские платы AM5 ATX: https://www.dns-shop.ru/catalog/17a89a0416404e77/materinskie-platy/?f%5Bsocket%5D=am5&f%5Bff%5D=atx
+- Материнские платы AM5 microATX: https://www.dns-shop.ru/catalog/17a89a0416404e77/materinskie-platy/?f%5Bsocket%5D=am5&f%5Bff%5D=micro-atx
+- Материнские платы AM5 miniITX: https://www.dns-shop.ru/catalog/17a89a0416404e77/materinskie-platy/?f%5Bsocket%5D=am5&f%5Bff%5D=mini-itx
+- Материнские платы LGA1700 ATX: https://www.dns-shop.ru/catalog/17a89a0416404e77/materinskie-platy/?f%5Bsocket%5D=lga1700&f%5Bff%5D=atx
+- Материнские платы LGA1700 microATX: https://www.dns-shop.ru/catalog/17a89a0416404e77/materinskie-platy/?f%5Bsocket%5D=lga1700&f%5Bff%5D=micro-atx
+- Материнские платы LGA1700 miniITX: https://www.dns-shop.ru/catalog/17a89a0416404e77/materinskie-platy/?f%5Bsocket%5D=lga1700&f%5Bff%5D=mini-itx
+- Материнские платы LGA1851 ATX: https://www.dns-shop.ru/catalog/17a89a0416404e77/materinskie-platy/?f%5Bsocket%5D=lga1851&f%5Bff%5D=atx
+- Материнские платы LGA1851 microATX: https://www.dns-shop.ru/catalog/17a89a0416404e77/materinskie-platy/?f%5Bsocket%5D=lga1851&f%5Bff%5D=micro-atx
+- Материнские платы Z790: https://www.dns-shop.ru/catalog/17a89a0416404e77/materinskie-platy/?f%5Bchipset%5D=z790
+- Материнские платы B760: https://www.dns-shop.ru/catalog/17a89a0416404e77/materinskie-platy/?f%5Bchipset%5D=b760
+- Материнские платы B650: https://www.dns-shop.ru/catalog/17a89a0416404e77/materinskie-platy/?f%5Bchipset%5D=b650
+- Материнские платы X670: https://www.dns-shop.ru/catalog/17a89a0416404e77/materinskie-platy/?f%5Bchipset%5D=x670
+- Материнские платы B650E: https://www.dns-shop.ru/catalog/17a89a0416404e77/materinskie-platy/?f%5Bchipset%5D=b650e
+- Материнские платы X870: https://www.dns-shop.ru/catalog/17a89a0416404e77/materinskie-platy/?f%5Bchipset%5D=x870
 - Видеокарты: https://www.dns-shop.ru/catalog/17a89aab16404e77/videokarty/
 - Оперативная память: https://www.dns-shop.ru/catalog/17a89ee416404e77/operativnaya-pamyat-dimm/
 - SSD M.2: https://www.dns-shop.ru/search/?q=SSD+накопитель
