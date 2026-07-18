@@ -113,6 +113,8 @@ app.post('/api/chat', async (req, res) => {
   const apiKey = String(req.body?.apiKey || '').trim();
   const model = String(req.body?.model || '').trim();
   const messages = sanitizeMessages(req.body?.messages);
+  const maxTokens = Math.max(500, Math.min(8000, Number(req.body?.maxTokens) || 4000));
+  const temperature = Math.max(0, Math.min(1, Number(req.body?.temperature) ?? 0.25));
 
   if (!apiKey) return res.status(400).json({ error: 'Укажите API-ключ RouterAI в настройках.' });
   if (!model) return res.status(400).json({ error: 'Выберите модель RouterAI.' });
@@ -133,8 +135,8 @@ app.post('/api/chat', async (req, res) => {
       body: JSON.stringify({
         model,
         messages: [{ role: 'system', content: systemPrompt }, ...messages],
-        temperature: 0.25,
-        max_tokens: 1700
+        temperature,
+        max_tokens: maxTokens
       })
     });
 
@@ -144,8 +146,22 @@ app.post('/api/chat', async (req, res) => {
       return res.status(upstream.status).json({ error: upstreamMessage });
     }
 
-    const answer = payload?.choices?.[0]?.message?.content;
-    if (!answer) return res.status(502).json({ error: 'Модель не вернула текстовый ответ.' });
+    const choice = payload?.choices?.[0];
+    const finishReason = choice?.finish_reason;
+    const answer = choice?.message?.content;
+
+    if (!answer) {
+      console.error('RouterAI empty answer. finish_reason=%s payload=%s',
+        finishReason,
+        JSON.stringify(payload).slice(0, 500));
+
+      let hint = '';
+      if (finishReason === 'length') hint = ' Ответ обрезан лимитом токенов — попробуйте переспросить короче.';
+      else if (finishReason === 'content_filter') hint = ' Ответ заблокирован фильтром модели.';
+      else if (!choice) hint = ' Модель не вернула ни одного варианта ответа (choices пуст).';
+
+      return res.status(502).json({ error: `Модель не вернула текстовый ответ.${hint}` });
+    }
 
     res.json({ answer, model: payload?.model || model });
   } catch (error) {
