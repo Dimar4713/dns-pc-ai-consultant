@@ -9,10 +9,30 @@ const PORT = Number(process.env.PORT || 3000);
 const ROUTERAI_BASE_URL = (process.env.ROUTERAI_BASE_URL || 'https://routerai.ru/api/v1').replace(/\/$/, '');
 
 const root = __dirname;
-const kbPath = path.join(root, 'data', 'knowledge-base.md');
+const dataDir = path.join(root, 'data');
 const promptPath = path.join(root, 'prompts', 'system-prompt.md');
 
-const knowledgeBase = fs.readFileSync(kbPath, 'utf8');
+function loadKnowledgeBase() {
+  const files = fs
+    .readdirSync(dataDir)
+    .filter((name) => /^knowledge-base(?:-\d+)?\.md$/i.test(name))
+    .sort((a, b) => a.localeCompare(b, 'en'));
+
+  if (!files.length) {
+    throw new Error('В каталоге data не найдены файлы knowledge-base*.md');
+  }
+
+  return {
+    files,
+    text: files
+      .map((name) => fs.readFileSync(path.join(dataDir, name), 'utf8').trim())
+      .filter(Boolean)
+      .join('\n\n')
+  };
+}
+
+const loadedKnowledge = loadKnowledgeBase();
+const knowledgeBase = loadedKnowledge.text;
 const baseSystemPrompt = fs.readFileSync(promptPath, 'utf8');
 
 app.use(express.json({ limit: '1mb' }));
@@ -81,7 +101,12 @@ function sanitizeMessages(messages) {
 }
 
 app.get('/api/health', (_req, res) => {
-  res.json({ ok: true, service: 'dns-pc-ai-consultant' });
+  res.json({
+    ok: true,
+    service: 'dns-pc-ai-consultant',
+    knowledgeFiles: loadedKnowledge.files,
+    knowledgeSections: kbSections.length
+  });
 });
 
 app.post('/api/chat', async (req, res) => {
@@ -131,4 +156,5 @@ app.post('/api/chat', async (req, res) => {
 
 app.listen(PORT, '0.0.0.0', () => {
   console.log(`DNS PC AI Consultant: http://0.0.0.0:${PORT}`);
+  console.log(`База знаний: ${loadedKnowledge.files.join(', ')}; разделов: ${kbSections.length}`);
 });
