@@ -296,34 +296,95 @@ form.addEventListener('submit', async (event) => {
   input.value = '';
   input.style.height = 'auto';
   setBusy(true);
-  const pending = addMessage('assistant', 'Подбираю совместимые компоненты…', 'pending');
-  pending.querySelector('.message.pending').innerHTML =
-    '<span class="spinner" aria-hidden="true"></span>Подбираю совместимые компоненты…';
+
+  const responseRow = addMessage('assistant', '', 'pending');
+  const bubble = responseRow.querySelector('.message.pending');
+  bubble.innerHTML = '<span class="spinner" aria-hidden="true"></span>Подбираю совместимые компоненты…';
+
+  let fullText = '';
 
   try {
     const response = await fetch('/api/chat', {
       method: 'POST',
-      headers: requestHeaders(true),
+      headers: { ...requestHeaders(true), 'Accept': 'text/event-stream' },
       body: JSON.stringify({ messages })
     });
-    const payload = await response.json().catch(() => ({}));
-    if (!response.ok) throw new Error(payload.error || `HTTP ${response.status}`);
 
-    pending.remove();
-    addMessage('assistant', payload.answer);
-    messages.push({ role: 'assistant', content: payload.answer });
-    autoSave();
-    if (Number.isFinite(payload.remainingSession)) {
-      showNotice(`Публичный режим: доступно сообщений в текущем диалоге — ${payload.remainingSession}.`);
+    if (!response.ok || !response.body) {
+      const payload = await response.json().catch(() => ({}));
+      throw new Error(payload.error || `HTTP ${response.status}`);
     }
+
+    const reader = response.body.getReader();
+    const decoder = new TextDecoder();
+    let buffer = '';
+
+    outer: while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      buffer += decoder.decode(value, { stream: true });
+      const lines = buffer.split('\n');
+      buffer = lines.pop() ?? '';
+
+      for (const line of lines) {
+        if (!line.startsWith('data: ')) continue;
+        const raw = line.slice(6).trim();
+        if (!raw) continue;
+        let json;
+        try { json = JSON.parse(raw); } catch { continue; }
+
+        if (json.error) throw new Error(json.error);
+
+        if (json.type === 'done') {
+          if (Number.isFinite(json.remainingSession)) {
+            showNotice(`Публичный режим: доступно сообщений в текущем диалоге — ${json.remainingSession}.`);
+          }
+          break outer;
+        }
+
+        const token = json.choices?.[0]?.delta?.content;
+        if (token) {
+          fullText += token;
+          bubble.className = 'message assistant';
+          const html = parseMarkdown(fullText);
+          bubble.innerHTML = html || escapeHtml(fullText);
+          chat.scrollTop = chat.scrollHeight;
+        }
+      }
+    }
+
+    if (!fullText) throw new Error('Модель не вернула текстовый ответ.');
+
+    messages.push({ role: 'assistant', content: fullText });
+    autoSave();
+
+    // Кнопка «Подробное объяснение» — если ответ содержит таблицу сборки
+    if (/\|[-:]+\|/.test(fullText)) {
+      addDetailButton(responseRow);
+    }
+
   } catch (error) {
-    pending.remove();
-    addMessage('assistant', `Ошибка: ${error.message}`);
+    bubble.className = 'message assistant';
+    bubble.textContent = `Ошибка: ${error.message}`;
   } finally {
     setBusy(false);
     input.focus();
   }
 });
+
+function addDetailButton(row) {
+  const btn = document.createElement('button');
+  btn.className = 'detail-btn';
+  btn.textContent = '📋 Подробное объяснение';
+  btn.title = 'Запросить детальный разбор каждого компонента';
+  btn.addEventListener('click', () => {
+    btn.remove();
+    input.value = 'Объясни подробнее выбор каждого компонента из последней сборки: почему именно эта модель и на что обратить внимание при покупке.';
+    input.dispatchEvent(new Event('input'));
+    form.requestSubmit();
+  });
+  row.after(btn);
+}
 
 newChatButton.addEventListener('click', () => {
   if (messages.length && !confirm('Начать новый диалог? Текущий сохранён в истории.')) return;

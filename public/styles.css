@@ -149,6 +149,25 @@ button, input, select, textarea { font: inherit; }
   to { transform: rotate(360deg); }
 }
 
+.detail-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin: 4px 0 8px 52px;
+  padding: 6px 14px;
+  background: transparent;
+  color: var(--accent);
+  border: 1.5px solid var(--accent);
+  border-radius: 8px;
+  font-size: 0.82rem;
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s;
+}
+.detail-btn:hover {
+  background: var(--accent);
+  color: #fff;
+}
+
 /* Markdown inside assistant bubbles */
 .message.assistant p  { margin: 0 0 .6em; }
 .message.assistant p:last-child { margin-bottom: 0; }
