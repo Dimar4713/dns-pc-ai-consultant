@@ -1,264 +1,249 @@
 'use strict';
 
-const STORAGE_KEY  = 'dns-pc-consultant.settings.v2';
-const HISTORY_KEY  = 'dns-pc-consultant.history';
-const MAX_HISTORY  = 30;
-const DEFAULT_MODEL       = 'deepseek/deepseek-v4-pro';
-const DEFAULT_MAX_TOKENS  = 4000;
-const DEFAULT_TEMPERATURE = 0.25;
-const WELCOME = `Здравствуйте! Я помогу подобрать совместимую сборку компьютера по пилотной базе товаров DNS.ru.\n\nОтветьте, пожалуйста, сразу на 3 вопроса:\n1. Какой бюджет и входят ли в него монитор, Windows и периферия?\n2. Для каких задач нужен ПК: игры, работа, учёба? Для игр укажите разрешение и желаемую частоту кадров; для работы — программы.\n3. Есть ли уже купленные детали и важны ли тишина, компактность, внешний вид или будущий апгрейд?`;
+const HISTORY_KEY = 'dns-pc-consultant.history';
+const SESSION_KEY = 'dns-pc-consultant.public-session';
+const INVITE_KEY = 'dns-pc-consultant.invite-code';
+const MAX_HISTORY = 30;
 
-// ── DOM refs ─────────────────────────────────────────────────────────────────
-const chat            = document.querySelector('#chat');
-const form            = document.querySelector('#chatForm');
-const input           = document.querySelector('#messageInput');
-const sendButton      = document.querySelector('#sendButton');
-const settingsDialog  = document.querySelector('#settingsDialog');
-const settingsButton  = document.querySelector('#settingsButton');
-const closeSettings   = document.querySelector('#closeSettings');
-const settingsForm    = document.querySelector('#settingsForm');
-const apiKeyInput     = document.querySelector('#apiKeyInput');
-const modelSelect     = document.querySelector('#modelSelect');
-const customModelLabel= document.querySelector('#customModelLabel');
-const customModelInput= document.querySelector('#customModelInput');
-const maxTokensRange  = document.querySelector('#maxTokensRange');
-const maxTokensNumber = document.querySelector('#maxTokensNumber');
-const temperatureRange= document.querySelector('#temperatureRange');
-const temperatureNumber=document.querySelector('#temperatureNumber');
-const newChatButton   = document.querySelector('#newChatButton');
-const pdfButton       = document.querySelector('#pdfButton');
-const historyButton   = document.querySelector('#historyButton');
-const historyDialog   = document.querySelector('#historyDialog');
-const closeHistory    = document.querySelector('#closeHistory');
-const historyList     = document.querySelector('#historyList');
+const chat = document.querySelector('#chat');
+const form = document.querySelector('#chatForm');
+const input = document.querySelector('#messageInput');
+const sendButton = document.querySelector('#sendButton');
+const newChatButton = document.querySelector('#newChatButton');
+const pdfButton = document.querySelector('#pdfButton');
+const historyButton = document.querySelector('#historyButton');
+const historyDialog = document.querySelector('#historyDialog');
+const closeHistory = document.querySelector('#closeHistory');
+const historyList = document.querySelector('#historyList');
+const examples = document.querySelector('#examples');
+const demoNotice = document.querySelector('#demoNotice');
+const serviceStatus = document.querySelector('#serviceStatus');
 
-// ── State ─────────────────────────────────────────────────────────────────────
 const messages = [];
 let isBusy = false;
-let currentSessionId = null;
+let currentSessionId = getOrCreateSessionId();
+let publicConfig = null;
+let welcomeShown = false;
 
-// ── Settings ──────────────────────────────────────────────────────────────────
-function loadSettings() {
-  try {
-    const p = JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}');
-    return {
-      apiKey:      typeof p.apiKey === 'string' ? p.apiKey : '',
-      model:       typeof p.model  === 'string' && p.model ? p.model : DEFAULT_MODEL,
-      maxTokens:   Number.isFinite(p.maxTokens)   ? p.maxTokens   : DEFAULT_MAX_TOKENS,
-      temperature: Number.isFinite(p.temperature) ? p.temperature : DEFAULT_TEMPERATURE,
-    };
-  } catch { return { apiKey: '', model: DEFAULT_MODEL, maxTokens: DEFAULT_MAX_TOKENS, temperature: DEFAULT_TEMPERATURE }; }
-}
-function saveSettings(s) { localStorage.setItem(STORAGE_KEY, JSON.stringify(s)); }
-
-function syncPair(range, number) {
-  range.addEventListener('input',  () => { number.value = range.value; });
-  number.addEventListener('input', () => { range.value  = number.value; });
+function randomId() {
+  if (globalThis.crypto?.randomUUID) return globalThis.crypto.randomUUID();
+  return `sess-${Date.now()}-${Math.random().toString(36).slice(2, 12)}`;
 }
 
-// ── History manager ───────────────────────────────────────────────────────────
+function getOrCreateSessionId() {
+  const stored = sessionStorage.getItem(SESSION_KEY);
+  if (stored && /^[a-zA-Z0-9._-]{8,120}$/.test(stored)) return stored;
+  const id = randomId();
+  sessionStorage.setItem(SESSION_KEY, id);
+  return id;
+}
+
+function rotateSessionId() {
+  currentSessionId = randomId();
+  sessionStorage.setItem(SESSION_KEY, currentSessionId);
+}
+
+function captureInviteCode() {
+  const url = new URL(window.location.href);
+  const code = url.searchParams.get('code');
+  if (code) {
+    sessionStorage.setItem(INVITE_KEY, code);
+    url.searchParams.delete('code');
+    history.replaceState({}, '', `${url.pathname}${url.search}${url.hash}`);
+  }
+  return sessionStorage.getItem(INVITE_KEY) || '';
+}
+
+const inviteCode = captureInviteCode();
+
+function requestHeaders(includeJson = false) {
+  const headers = { 'X-Session-Id': currentSessionId };
+  if (includeJson) headers['Content-Type'] = 'application/json';
+  if (inviteCode) headers['X-Demo-Code'] = inviteCode;
+  return headers;
+}
+
 const History = {
   load() {
     try { return JSON.parse(localStorage.getItem(HISTORY_KEY) || '[]'); }
     catch { return []; }
   },
   save(list) { localStorage.setItem(HISTORY_KEY, JSON.stringify(list)); },
-
-  upsert(id, messages) {
-    if (!messages.length) return;
-    const title = messages.find(m => m.role === 'user')?.content?.slice(0, 60) || 'Диалог';
-    const list  = this.load().filter(s => s.id !== id);
-    list.unshift({ id, title, date: Date.now(), messages: JSON.parse(JSON.stringify(messages)) });
+  upsert(id, items) {
+    if (!items.length) return;
+    const title = items.find((message) => message.role === 'user')?.content?.slice(0, 60) || 'Диалог';
+    const list = this.load().filter((session) => session.id !== id);
+    list.unshift({ id, title, date: Date.now(), messages: JSON.parse(JSON.stringify(items)) });
     this.save(list.slice(0, MAX_HISTORY));
   },
-
-  delete(id) { this.save(this.load().filter(s => s.id !== id)); },
-
-  get(id) { return this.load().find(s => s.id === id) || null; },
+  delete(id) { this.save(this.load().filter((session) => session.id !== id)); }
 };
 
-function newSessionId() {
-  return `sess-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`;
+if (typeof marked !== 'undefined') {
+  marked.use({
+    gfm: true,
+    breaks: true,
+    renderer: {
+      link(href, title, text) {
+        const safeHref = String(href || '');
+        const titleAttr = title ? ` title="${escapeHtml(title)}"` : '';
+        return `<a href="${escapeHtml(safeHref)}"${titleAttr} target="_blank" rel="noopener noreferrer">${text || ''}</a>`;
+      },
+      table(header, body) {
+        return `<div class="table-wrap"><table><thead>${header || ''}</thead><tbody>${body || ''}</tbody></table></div>`;
+      }
+    }
+  });
+}
+
+function escapeHtml(value) {
+  return String(value || '')
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#039;');
+}
+
+function parseMarkdown(text) {
+  if (typeof marked === 'undefined') return null;
+  try { return marked.parse(text); }
+  catch { return null; }
+}
+
+function addMessage(role, content, extraClass = '') {
+  const row = document.createElement('div');
+  row.className = `message-row ${role}`;
+
+  const avatar = document.createElement('div');
+  avatar.className = 'avatar';
+  avatar.textContent = role === 'assistant' ? '🤖' : '👤';
+
+  const bubble = document.createElement('div');
+  bubble.className = `message ${role} ${extraClass}`.trim();
+  if (role === 'assistant' && content) {
+    const html = parseMarkdown(content);
+    if (html) bubble.innerHTML = html;
+    else bubble.textContent = content;
+  } else {
+    bubble.textContent = content;
+  }
+
+  row.append(role === 'user' ? bubble : avatar, role === 'user' ? avatar : bubble);
+  chat.append(row);
+  chat.scrollTop = chat.scrollHeight;
+  return row;
+}
+
+function setBusy(value) {
+  isBusy = value;
+  sendButton.disabled = value || !publicConfig?.accessible || !publicConfig?.serviceReady;
+  input.disabled = value || !publicConfig?.accessible || !publicConfig?.serviceReady;
+}
+
+function showNotice(text, kind = '') {
+  demoNotice.hidden = !text;
+  demoNotice.textContent = text || '';
+  demoNotice.className = `demo-notice ${kind}`.trim();
+}
+
+function renderExamples(items = []) {
+  examples.innerHTML = '';
+  for (const text of items) {
+    const button = document.createElement('button');
+    button.type = 'button';
+    button.className = 'example-chip';
+    button.textContent = text;
+    button.addEventListener('click', () => {
+      input.value = text;
+      input.dispatchEvent(new Event('input'));
+      input.focus();
+    });
+    examples.append(button);
+  }
+}
+
+function showWelcome() {
+  if (welcomeShown) return;
+  addMessage('assistant', publicConfig?.welcome || 'Здравствуйте! Опишите задачи и бюджет будущего компьютера.');
+  welcomeShown = true;
+}
+
+async function loadPublicConfig() {
+  try {
+    const response = await fetch('/api/public-config', { headers: requestHeaders() });
+    publicConfig = await response.json();
+    input.maxLength = publicConfig?.limits?.maxInputChars || 4000;
+    renderExamples(publicConfig.examples || []);
+
+    if (!publicConfig.accessible) {
+      serviceStatus.className = 'service-status warning';
+      showNotice(
+        publicConfig.publicMode === 'INVITE_ONLY'
+          ? 'Демонстрация доступна только по персональной ссылке или коду приглашения.'
+          : 'Публичная демонстрация временно отключена.',
+        'error'
+      );
+    } else if (!publicConfig.serviceReady) {
+      serviceStatus.className = 'service-status offline';
+      showNotice(`Консультант временно не настроен. Контакт: ${publicConfig.contactEmail}`, 'error');
+    } else {
+      serviceStatus.className = 'service-status ready';
+      const remaining = publicConfig?.limits?.remainingSession;
+      showNotice(Number.isFinite(remaining) ? `Публичный режим: доступно сообщений в текущем диалоге — ${remaining}.` : '');
+    }
+
+    showWelcome();
+    setBusy(false);
+  } catch {
+    publicConfig = { accessible: false, serviceReady: false };
+    serviceStatus.className = 'service-status offline';
+    showNotice('Не удалось получить состояние демонстрации.', 'error');
+    showWelcome();
+    setBusy(false);
+  }
 }
 
 function autoSave() {
   if (currentSessionId && messages.length) History.upsert(currentSessionId, messages);
 }
 
-// ── marked.js setup (links open in new tab, tables enabled) ──────────────────
-if (typeof marked !== 'undefined') {
-  marked.use({
-    gfm: true,
-    breaks: true,
-    renderer: {
-      // marked v12 uses positional renderer args (token objects arrived in v13):
-      //   link(href, title, text) — text is already-rendered inner HTML
-      //   table(header, body)    — header/body are already-rendered HTML strings
-      link(href, title, text) {
-        const titleAttr = title ? ` title="${title}"` : '';
-        return `<a href="${href ?? ''}"${titleAttr} target="_blank" rel="noopener noreferrer">${text ?? ''}</a>`;
-      },
-      table(header, body) {
-        return `<div class="table-wrap"><table>`
-             + `<thead>${header ?? ''}</thead>`
-             + `<tbody>${body ?? ''}</tbody>`
-             + `</table></div>`;
-      },
-    },
+function formatDate(timestamp) {
+  return new Date(timestamp).toLocaleString('ru-RU', {
+    day: 'numeric', month: 'long', hour: '2-digit', minute: '2-digit'
   });
 }
 
-function parseMarkdown(text) {
-  if (typeof marked === 'undefined') return null;
-  try {
-    return marked.parse(text);
-  } catch (err) {
-    console.error('marked.parse error:', err);
-    return null;
-  }
-}
-
-// ── Product popups ────────────────────────────────────────────────────────────
-let activePopup = null;
-
-function closeActivePopup() {
-  if (activePopup) { activePopup.remove(); activePopup = null; }
-}
-
-function positionPopup(popup, li) {
-  // position: fixed → viewport coordinates only (no scroll offset)
-  const rect = li.getBoundingClientRect();
-  const pw   = popup.offsetWidth  || 300;
-  const ph   = popup.offsetHeight || 0;
-  const vw   = window.innerWidth;
-  const vh   = window.innerHeight;
-  const GAP  = 10;
-
-  let left = rect.right + GAP;
-  if (left + pw > vw - GAP) left = rect.left - pw - GAP;
-  if (left < GAP) left = GAP;
-
-  let top = rect.top;
-  if (top + ph > vh - GAP) top = Math.max(GAP, vh - ph - GAP);
-
-  popup.style.left = `${left}px`;
-  popup.style.top  = `${top}px`;
-}
-
-function buildPopup(li) {
-  const popup = document.createElement('div');
-  popup.className = 'product-popup';
-
-  const clone = li.cloneNode(true);
-  clone.querySelectorAll('ul, ol').forEach(el => el.remove());
-  popup.innerHTML = clone.innerHTML;
-
-  const link = li.querySelector('a[href]');
-  if (link) {
-    const btn = document.createElement('a');
-    btn.href      = link.href;
-    btn.target    = '_blank';
-    btn.rel       = 'noopener noreferrer';
-    btn.className = 'product-popup-btn';
-    btn.textContent = 'Открыть на DNS →';
-    popup.appendChild(btn);
-  }
-  return popup;
-}
-
-function attachPopups(bubble) {
-  bubble.querySelectorAll('li').forEach(li => {
-    if (!/\d[\d\s]*(?:руб|₽)/i.test(li.textContent)) return;
-    li.classList.add('has-popup');
-
-    function show(e) {
-      e.stopPropagation();
-      closeActivePopup();
-      const popup = buildPopup(li);
-      popup.style.visibility = 'hidden';
-      document.body.appendChild(popup);
-      activePopup = popup;
-
-      // measure after paint so offsetHeight is real
-      requestAnimationFrame(() => {
-        positionPopup(popup, li);
-        popup.style.visibility = '';
-      });
-
-      popup.addEventListener('mouseleave', closeActivePopup);
-      popup.addEventListener('touchstart', ev => ev.stopPropagation(), { passive: true });
-    }
-
-    li.addEventListener('mouseenter', show);
-    li.addEventListener('touchstart',  show, { passive: true });
-  });
-}
-
-document.addEventListener('click',      closeActivePopup);
-document.addEventListener('touchstart', closeActivePopup, { passive: true });
-
-// ── Chat rendering ────────────────────────────────────────────────────────────
-function addMessage(role, content, extraClass = '') {
-  const row    = document.createElement('div');
-  row.className = `message-row ${role}`;
-
-  const avatar = document.createElement('div');
-  avatar.className  = 'avatar';
-  avatar.textContent = role === 'assistant' ? '🤖' : '👤';
-
-  const bubble = document.createElement('div');
-  bubble.className = `message ${role} ${extraClass}`.trim();
-
-  if (role === 'assistant' && content) {
-    const html = parseMarkdown(content);
-    if (html) { bubble.innerHTML = html; attachPopups(bubble); }
-    else       { bubble.textContent = content; }
-  } else {
-    bubble.textContent = content;
-  }
-
-  row.append(role === 'user' ? bubble : avatar,
-             role === 'user' ? avatar  : bubble);
-  chat.append(row);
-  chat.scrollTop = chat.scrollHeight;
-  return row;
-}
-
-function showWelcome() { addMessage('assistant', WELCOME); }
-
-// ── Load a saved session into the chat ───────────────────────────────────────
-function loadSession(session) {
+function loadSavedSession(session) {
   if (isBusy) return;
   messages.length = 0;
-  chat.innerHTML  = '';
+  chat.innerHTML = '';
   currentSessionId = session.id;
-  for (const m of session.messages) {
-    addMessage(m.role, m.content);
-    messages.push(m);
+  sessionStorage.setItem(SESSION_KEY, currentSessionId);
+  welcomeShown = true;
+  for (const message of session.messages) {
+    addMessage(message.role, message.content);
+    messages.push(message);
   }
   historyDialog.close();
   input.focus();
 }
 
-// ── History panel UI ─────────────────────────────────────────────────────────
-function formatDate(ts) {
-  return new Date(ts).toLocaleString('ru-RU', { day: 'numeric', month: 'long', hour: '2-digit', minute: '2-digit' });
-}
-
 function renderHistoryList() {
   const list = History.load();
+  historyList.innerHTML = '';
   if (!list.length) {
     historyList.innerHTML = '<p class="history-empty">Сохранённых диалогов нет.</p>';
     return;
   }
-  historyList.innerHTML = '';
-  for (const s of list) {
+
+  for (const session of list) {
     const item = document.createElement('div');
     item.className = 'history-item';
     item.innerHTML = `
       <div class="history-item-info">
-        <span class="history-item-title">${escHtml(s.title)}${s.title.length >= 60 ? '…' : ''}</span>
-        <span class="history-item-meta">${formatDate(s.date)} · ${s.messages.length} сообщ.</span>
+        <span class="history-item-title">${escapeHtml(session.title)}${session.title.length >= 60 ? '…' : ''}</span>
+        <span class="history-item-meta">${formatDate(session.date)} · ${session.messages.length} сообщ.</span>
       </div>
       <div class="history-item-actions">
         <button class="h-btn" data-action="load">▶ Продолжить</button>
@@ -266,105 +251,45 @@ function renderHistoryList() {
         <button class="h-btn danger" data-action="delete">🗑 Удалить</button>
       </div>`;
 
-    item.querySelector('[data-action="load"]').addEventListener('click', () => loadSession(s));
-
+    item.querySelector('[data-action="load"]').addEventListener('click', () => loadSavedSession(session));
     item.querySelector('[data-action="pdf"]').addEventListener('click', () => {
-      // Temporarily render the session in a hidden div, then print
-      const saved = { id: currentSessionId, messages: [...messages], html: chat.innerHTML };
-      loadSession(s);
-      requestAnimationFrame(() => {
-        injectPrintHeader();
-        window.print();
-        // restore
-        setTimeout(() => {
-          messages.length = 0;
-          messages.push(...saved.messages);
-          chat.innerHTML = saved.html;
-          currentSessionId = saved.id;
-        }, 500);
-      });
+      loadSavedSession(session);
+      requestAnimationFrame(() => window.print());
     });
-
     item.querySelector('[data-action="delete"]').addEventListener('click', () => {
-      if (!confirm(`Удалить диалог «${s.title}»?`)) return;
-      History.delete(s.id);
-      if (s.id === currentSessionId) currentSessionId = null;
+      if (!confirm(`Удалить диалог «${session.title}»?`)) return;
+      History.delete(session.id);
       renderHistoryList();
     });
-
-    historyList.appendChild(item);
+    historyList.append(item);
   }
 }
 
-function escHtml(str) {
-  return str.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
-}
-
-historyButton.addEventListener('click', () => { renderHistoryList(); historyDialog.showModal(); });
-closeHistory.addEventListener('click',  () => historyDialog.close());
-historyDialog.addEventListener('click', e => { if (e.target === historyDialog) historyDialog.close(); });
-
-// ── Settings panel ────────────────────────────────────────────────────────────
-function openSettings() {
-  const s = loadSettings();
-  apiKeyInput.value   = s.apiKey;
-  const known = [...modelSelect.options].some(o => o.value === s.model && o.value !== 'custom');
-  modelSelect.value       = known ? s.model : 'custom';
-  customModelInput.value  = known ? '' : s.model;
-  customModelLabel.hidden = known;
-  maxTokensRange.value  = s.maxTokens;
-  maxTokensNumber.value = s.maxTokens;
-  temperatureRange.value  = s.temperature;
-  temperatureNumber.value = s.temperature;
-  settingsDialog.showModal();
-}
-
-function setBusy(v) {
-  isBusy = v;
-  sendButton.disabled = v;
-  input.disabled = v;
-}
-
-syncPair(maxTokensRange,  maxTokensNumber);
-syncPair(temperatureRange, temperatureNumber);
-
-settingsButton.addEventListener('click', openSettings);
-closeSettings.addEventListener('click',  () => settingsDialog.close());
-settingsDialog.addEventListener('click', e => { if (e.target === settingsDialog) settingsDialog.close(); });
-modelSelect.addEventListener('change', () => { customModelLabel.hidden = modelSelect.value !== 'custom'; });
-settingsForm.addEventListener('submit', e => {
-  e.preventDefault();
-  const model = modelSelect.value === 'custom' ? customModelInput.value.trim() : modelSelect.value;
-  if (!model) { customModelInput.focus(); return; }
-  saveSettings({
-    apiKey:      apiKeyInput.value.trim(),
-    model,
-    maxTokens:   Math.max(500, Math.min(8000, Number(maxTokensNumber.value)   || DEFAULT_MAX_TOKENS)),
-    temperature: Math.max(0,   Math.min(1,    Number(temperatureNumber.value) ?? DEFAULT_TEMPERATURE)),
-  });
-  settingsDialog.close();
+historyButton.addEventListener('click', () => {
+  renderHistoryList();
+  historyDialog.showModal();
+});
+closeHistory.addEventListener('click', () => historyDialog.close());
+historyDialog.addEventListener('click', (event) => {
+  if (event.target === historyDialog) historyDialog.close();
 });
 
-// ── Composer ──────────────────────────────────────────────────────────────────
 input.addEventListener('input', () => {
   input.style.height = 'auto';
   input.style.height = `${Math.min(input.scrollHeight, 180)}px`;
 });
-input.addEventListener('keydown', e => {
-  if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); form.requestSubmit(); }
+input.addEventListener('keydown', (event) => {
+  if (event.key === 'Enter' && !event.shiftKey) {
+    event.preventDefault();
+    form.requestSubmit();
+  }
 });
 
-form.addEventListener('submit', async e => {
-  e.preventDefault();
-  if (isBusy) return;
+form.addEventListener('submit', async (event) => {
+  event.preventDefault();
+  if (isBusy || !publicConfig?.accessible || !publicConfig?.serviceReady) return;
   const text = input.value.trim();
   if (!text) return;
-
-  const settings = loadSettings();
-  if (!settings.apiKey) { openSettings(); apiKeyInput.focus(); return; }
-
-  // Start a session if this is the first message
-  if (!currentSessionId) currentSessionId = newSessionId();
 
   addMessage('user', text);
   messages.push({ role: 'user', content: text });
@@ -374,52 +299,45 @@ form.addEventListener('submit', async e => {
   const pending = addMessage('assistant', 'Подбираю совместимые компоненты…', 'pending');
 
   try {
-    const res = await fetch('/api/chat', {
+    const response = await fetch('/api/chat', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ apiKey: settings.apiKey, model: settings.model, messages, maxTokens: settings.maxTokens, temperature: settings.temperature }),
+      headers: requestHeaders(true),
+      body: JSON.stringify({ messages })
     });
-    const payload = await res.json().catch(() => ({}));
-    if (!res.ok) throw new Error(payload.error || `HTTP ${res.status}`);
+    const payload = await response.json().catch(() => ({}));
+    if (!response.ok) throw new Error(payload.error || `HTTP ${response.status}`);
 
     pending.remove();
     addMessage('assistant', payload.answer);
     messages.push({ role: 'assistant', content: payload.answer });
     autoSave();
-  } catch (err) {
+    if (Number.isFinite(payload.remainingSession)) {
+      showNotice(`Публичный режим: доступно сообщений в текущем диалоге — ${payload.remainingSession}.`);
+    }
+  } catch (error) {
     pending.remove();
-    addMessage('assistant', `Ошибка: ${err.message}`);
+    addMessage('assistant', `Ошибка: ${error.message}`);
   } finally {
     setBusy(false);
     input.focus();
   }
 });
 
-// ── New chat ──────────────────────────────────────────────────────────────────
 newChatButton.addEventListener('click', () => {
-  if (messages.length === 0) return;
-  if (!confirm('Начать новый диалог? Текущий уже сохранён в истории.')) return;
+  if (messages.length && !confirm('Начать новый диалог? Текущий сохранён в истории.')) return;
   messages.length = 0;
-  chat.innerHTML  = '';
-  currentSessionId = null;
+  chat.innerHTML = '';
+  rotateSessionId();
+  welcomeShown = false;
   showWelcome();
+  loadPublicConfig();
   input.focus();
 });
 
-// ── PDF ───────────────────────────────────────────────────────────────────────
-function injectPrintHeader() {
-  let h = document.querySelector('.print-header');
-  if (!h) { h = document.createElement('div'); h.className = 'print-header'; chat.prepend(h); }
-  const now = new Date().toLocaleString('ru-RU', { dateStyle: 'long', timeStyle: 'short' });
-  h.innerHTML = `<h2>AI-консультант по сборке ПК — DNS</h2><p>Диалог сохранён: ${now}</p>`;
-}
-
 pdfButton.addEventListener('click', () => {
   if (!messages.length) return;
-  injectPrintHeader();
   window.print();
 });
 
-// ── Init ──────────────────────────────────────────────────────────────────────
-showWelcome();
-input.focus();
+setBusy(true);
+loadPublicConfig();
