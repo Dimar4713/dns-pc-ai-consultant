@@ -105,28 +105,35 @@ if (typeof marked !== 'undefined') {
       // Calling Renderer.prototype.table() from within marked.use() breaks
       // in v12 because this.parser isn't wired up on the prototype call path.
       table(token) {
-        const cellText = (cell) => {
-          if (!cell) return '';
-          if (cell.tokens?.length && this.parser) return this.parser.parseInline(cell.tokens);
-          return cell.text ?? '';
-        };
+        try {
+          const cellText = (cell) => {
+            if (!cell) return '';
+            try {
+              if (cell.tokens?.length && this.parser) return this.parser.parseInline(cell.tokens);
+            } catch (_) { /* fallback to raw text */ }
+            return cell.text ?? '';
+          };
 
-        const header = (token.header ?? []).map(cell => {
-          const align = cell?.align ? ` style="text-align:${cell.align}"` : '';
-          return `<th${align}>${cellText(cell)}</th>`;
-        }).join('');
-
-        const rows = (token.rows ?? []).map(row =>
-          `<tr>${(row ?? []).map(cell => {
+          const header = (token.header ?? []).map(cell => {
             const align = cell?.align ? ` style="text-align:${cell.align}"` : '';
-            return `<td${align}>${cellText(cell)}</td>`;
-          }).join('')}</tr>`
-        ).join('');
+            return `<th${align}>${cellText(cell)}</th>`;
+          }).join('');
 
-        return `<div class="table-wrap"><table>`
-             + `<thead><tr>${header}</tr></thead>`
-             + `<tbody>${rows}</tbody>`
-             + `</table></div>`;
+          const rows = (token.rows ?? []).map(row =>
+            `<tr>${(row ?? []).map(cell => {
+              const align = cell?.align ? ` style="text-align:${cell.align}"` : '';
+              return `<td${align}>${cellText(cell)}</td>`;
+            }).join('')}</tr>`
+          ).join('');
+
+          return `<div class="table-wrap"><table>`
+               + `<thead><tr>${header}</tr></thead>`
+               + `<tbody>${rows}</tbody>`
+               + `</table></div>`;
+        } catch (err) {
+          console.error('Table render error:', err);
+          return '';
+        }
       },
     },
   });
@@ -134,7 +141,12 @@ if (typeof marked !== 'undefined') {
 
 function parseMarkdown(text) {
   if (typeof marked === 'undefined') return null;
-  return marked.parse(text);
+  try {
+    return marked.parse(text);
+  } catch (err) {
+    console.error('marked.parse error:', err);
+    return null;
+  }
 }
 
 // ── Product popups ────────────────────────────────────────────────────────────
