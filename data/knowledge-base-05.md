@@ -113,7 +113,10 @@
 - Кулеры для процессора: https://www.dns-shop.ru/catalog/17a9cc2d16404e77/kulery-dlya-processora/
 - Вентиляторы для корпуса: https://www.dns-shop.ru/catalog/17a9cf0216404e77/ventilatory-dla-korpusa/
 - Мониторы: https://www.dns-shop.ru/catalog/17a8943716404e77/monitory/
-- Клавиатуры (поиск): https://www.dns-shop.ru/search/?q=клавиатура
+- Клавиатуры (все): https://www.dns-shop.ru/search/?q=клавиатура
+- Клавиатуры игровые (поиск): https://www.dns-shop.ru/search/?q=игровая+клавиатура
+- Клавиатуры мембранные (поиск): https://www.dns-shop.ru/search/?q=мембранная+клавиатура
+- Клавиатуры механические (поиск): https://www.dns-shop.ru/search/?q=механическая+клавиатура
 - Мыши (поиск): https://www.dns-shop.ru/search/?q=мышь+компьютерная
 - Наушники и гарнитуры: https://www.dns-shop.ru/catalog/17a9ef1716404e77/nausniki-i-garnitury/
 - Веб-камеры: https://www.dns-shop.ru/catalog/17a89d9b16404e77/veb-kamery/
