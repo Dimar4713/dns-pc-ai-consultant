@@ -92,7 +92,7 @@
 - Материнские платы X670: https://www.dns-shop.ru/catalog/17a89a0416404e77/materinskie-platy/?chipset=x670
 - Видеокарты: https://www.dns-shop.ru/catalog/17a89aab16404e77/videokarty/
 - Оперативная память: https://www.dns-shop.ru/catalog/17a89ee416404e77/operativnaya-pamyat-dimm/
-- SSD M.2: https://www.dns-shop.ru/catalog/17a9d6ff16404e77/ssd-nakopiteli/
+- SSD M.2: https://www.dns-shop.ru/search/?q=SSD+накопитель
 - HDD: https://www.dns-shop.ru/catalog/9d1ae3293bac7fd7/zestkie-diski-hdd/
 - Блоки питания: https://www.dns-shop.ru/catalog/17a89c2216404e77/bloki-pitaniya/
 - Корпуса: https://www.dns-shop.ru/catalog/17a89c5616404e77/korpusa/

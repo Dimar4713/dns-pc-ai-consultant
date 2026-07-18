@@ -297,6 +297,8 @@ form.addEventListener('submit', async (event) => {
   input.style.height = 'auto';
   setBusy(true);
   const pending = addMessage('assistant', 'Подбираю совместимые компоненты…', 'pending');
+  pending.querySelector('.message.pending').innerHTML =
+    '<span class="spinner" aria-hidden="true"></span>Подбираю совместимые компоненты…';
 
   try {
     const response = await fetch('/api/chat', {

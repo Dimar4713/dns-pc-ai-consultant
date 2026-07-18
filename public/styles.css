@@ -127,7 +127,27 @@ button, input, select, textarea { font: inherit; }
   border-bottom-right-radius: 4px;
   white-space: pre-wrap;
 }
-.message.pending { color: var(--muted); font-style: italic; }
+.message.pending {
+  color: var(--muted);
+  font-style: italic;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.spinner {
+  width: 16px;
+  height: 16px;
+  border: 2px solid var(--border);
+  border-top-color: var(--accent);
+  border-radius: 50%;
+  animation: spin 0.75s linear infinite;
+  flex-shrink: 0;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
 
 /* Markdown inside assistant bubbles */
 .message.assistant p  { margin: 0 0 .6em; }

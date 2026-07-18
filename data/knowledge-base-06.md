@@ -69,12 +69,12 @@
 | Модель | Параметры | Назначение | Цена | Страница DNS |
 |---|---|---|---|---|
 | Kingston A400 SA400S37/960G | 960 ГБ, SATA, чтение до 500 МБ/с, запись до 450 МБ/с, TBW 300 ТБ | Апгрейд старого ПК, второй накопитель | проверить | [Поиск DNS: Kingston A400 SA400S37/960G](https://www.dns-shop.ru/search/?q=Kingston+A400+SA400S37%2F960G) |
-| SATA SSD 1–2 ТБ | 2.5", SATA III | Когда нет свободного M.2 или нужен недорогой тихий диск | проверить | [Каталог SSD](https://www.dns-shop.ru/catalog/17a9d6ff16404e77/ssd-nakopiteli/) |
+| SATA SSD 1–2 ТБ | 2.5", SATA III | Когда нет свободного M.2 или нужен недорогой тихий диск | проверить | [Каталог SSD](https://www.dns-shop.ru/search/?q=SSD+накопитель) |
 
 ### Дополнительные NVMe
 
 | Модель | Параметры | Назначение | Цена | Страница DNS |
 |---|---|---|---|---|
 | WD Black SN7100 WDS100T4X0E | 1 ТБ, PCIe 4.0×4, до 7250/6900 МБ/с, TLC, TBW 600 ТБ | Быстрый системный и игровой SSD | проверить | [Поиск DNS: WD Black SN7100 WDS100T4X0E](https://www.dns-shop.ru/search/?q=WD+Black+SN7100+WDS100T4X0E) |
-| Kingston NV3 1 ТБ | PCIe 4.0×4 | Бюджетный системный NVMe | ориентир есть в основной базе | [Каталог SSD](https://www.dns-shop.ru/catalog/17a9d6ff16404e77/ssd-nakopiteli/) |
-| Samsung 990 Pro 1 ТБ | PCIe 4.0×4 | Производительный рабочий диск | ориентир есть в основной базе | [Каталог SSD](https://www.dns-shop.ru/catalog/17a9d6ff16404e77/ssd-nakopiteli/) |
+| Kingston NV3 1 ТБ | PCIe 4.0×4 | Бюджетный системный NVMe | ориентир есть в основной базе | [Каталог SSD](https://www.dns-shop.ru/search/?q=SSD+накопитель) |
+| Samsung 990 Pro 1 ТБ | PCIe 4.0×4 | Производительный рабочий диск | ориентир есть в основной базе | [Каталог SSD](https://www.dns-shop.ru/search/?q=SSD+накопитель) |
