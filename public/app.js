@@ -91,49 +91,18 @@ if (typeof marked !== 'undefined') {
     gfm: true,
     breaks: true,
     renderer: {
-      // In marked v12 token.text is the raw source text; the rendered
-      // inner HTML lives in token.tokens and must go through parseInline.
-      link(token) {
-        const text = (this.parser && token.tokens?.length)
-          ? this.parser.parseInline(token.tokens)
-          : (token.text ?? '');
-        const href      = token.href  ?? '';
-        const titleAttr = token.title ? ` title="${token.title}"` : '';
-        return `<a href="${href}"${titleAttr} target="_blank" rel="noopener noreferrer">${text}</a>`;
+      // marked v12 uses positional renderer args (token objects arrived in v13):
+      //   link(href, title, text) — text is already-rendered inner HTML
+      //   table(header, body)    — header/body are already-rendered HTML strings
+      link(href, title, text) {
+        const titleAttr = title ? ` title="${title}"` : '';
+        return `<a href="${href ?? ''}"${titleAttr} target="_blank" rel="noopener noreferrer">${text ?? ''}</a>`;
       },
-      // Render table manually and wrap in scrollable div.
-      // Calling Renderer.prototype.table() from within marked.use() breaks
-      // in v12 because this.parser isn't wired up on the prototype call path.
-      table(token) {
-        try {
-          const cellText = (cell) => {
-            if (!cell) return '';
-            try {
-              if (cell.tokens?.length && this.parser) return this.parser.parseInline(cell.tokens);
-            } catch (_) { /* fallback to raw text */ }
-            return cell.text ?? '';
-          };
-
-          const header = (token.header ?? []).map(cell => {
-            const align = cell?.align ? ` style="text-align:${cell.align}"` : '';
-            return `<th${align}>${cellText(cell)}</th>`;
-          }).join('');
-
-          const rows = (token.rows ?? []).map(row =>
-            `<tr>${(row ?? []).map(cell => {
-              const align = cell?.align ? ` style="text-align:${cell.align}"` : '';
-              return `<td${align}>${cellText(cell)}</td>`;
-            }).join('')}</tr>`
-          ).join('');
-
-          return `<div class="table-wrap"><table>`
-               + `<thead><tr>${header}</tr></thead>`
-               + `<tbody>${rows}</tbody>`
-               + `</table></div>`;
-        } catch (err) {
-          console.error('Table render error:', err);
-          return '';
-        }
+      table(header, body) {
+        return `<div class="table-wrap"><table>`
+             + `<thead>${header ?? ''}</thead>`
+             + `<tbody>${body ?? ''}</tbody>`
+             + `</table></div>`;
       },
     },
   });
