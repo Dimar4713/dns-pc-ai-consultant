@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "private": true,
   "description": "Пилотный AI-консультант по подбору комплектующих DNS.ru для Replit и RouterAI.ru",
-  "author": "Dmitry Marareskul",
+  "author": "Dmitry Marareskul <dimamarareskul@gmail.com>",
   "license": "Apache-2.0",
   "repository": {
     "type": "git",
