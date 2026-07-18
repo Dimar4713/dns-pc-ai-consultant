@@ -1,0 +1,86 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="robots" content="noindex,nofollow" />
+  <title>Администрирование AI-консультанта</title>
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+  <link rel="stylesheet" href="/admin.css" />
+</head>
+<body>
+  <main class="admin-shell">
+    <section id="loginView" class="login-card">
+      <div class="brand-mark">🛡</div>
+      <h1>Вход администратора</h1>
+      <p>Настройки публичной демонстрации и контроль использования.</p>
+      <form id="loginForm">
+        <label>Email<input id="loginEmail" type="email" autocomplete="username" required /></label>
+        <label>Пароль<input id="loginPassword" type="password" autocomplete="current-password" required /></label>
+        <button type="submit">Войти</button>
+      </form>
+      <p id="loginError" class="error" hidden></p>
+      <a class="back-link" href="/">← Вернуться к консультанту</a>
+    </section>
+
+    <section id="dashboard" class="dashboard" hidden>
+      <header class="admin-header">
+        <div>
+          <h1>Панель управления</h1>
+          <p id="adminIdentity"></p>
+        </div>
+        <div class="header-actions">
+          <a href="/" target="_blank" rel="noopener">Открыть демо</a>
+          <button id="logoutButton" class="secondary" type="button">Выйти</button>
+        </div>
+      </header>
+
+      <div id="statusBanner" class="status-banner" hidden></div>
+
+      <section class="metrics-grid" aria-label="Метрики">
+        <article><span>Запросов сегодня</span><strong id="metricDaily">—</strong></article>
+        <article><span>Успешных ответов</span><strong id="metricSuccess">—</strong></article>
+        <article><span>Ошибок модели</span><strong id="metricErrors">—</strong></article>
+        <article><span>Активных сессий</span><strong id="metricSessions">—</strong></article>
+      </section>
+
+      <section class="panel">
+        <div class="panel-title">
+          <div><h2>Настройки консультанта</h2><p>Изменения действуют до перезапуска приложения. Постоянные значения задаются переменными окружения.</p></div>
+          <span id="keyStatus" class="pill">API</span>
+        </div>
+        <form id="settingsForm" class="settings-grid">
+          <label class="wide">Модель RouterAI<input id="modelInput" type="text" required /></label>
+          <label>Максимум токенов<input id="maxTokensInput" type="number" min="500" max="8000" step="100" /></label>
+          <label>Температура<input id="temperatureInput" type="number" min="0" max="1" step="0.05" /></label>
+          <label>Публичный режим
+            <select id="publicModeSelect">
+              <option value="PUBLIC">Доступен всем</option>
+              <option value="INVITE_ONLY">Только по коду</option>
+              <option value="DISABLED">Отключён</option>
+            </select>
+          </label>
+          <label>Сообщений на сессию<input id="sessionLimitInput" type="number" min="1" max="200" /></label>
+          <label>Запросов с IP в сутки<input id="ipLimitInput" type="number" min="1" max="5000" /></label>
+          <label>Общий лимит в сутки<input id="globalLimitInput" type="number" min="1" max="100000" /></label>
+          <label>Максимум символов<input id="maxCharsInput" type="number" min="200" max="12000" /></label>
+          <label class="wide">Приветствие<textarea id="welcomeInput" rows="5" maxlength="3000"></textarea></label>
+          <label class="wide">Примеры запросов<textarea id="examplesInput" rows="4" placeholder="Один пример на строку"></textarea></label>
+          <div class="form-actions wide"><button type="submit">Сохранить настройки</button></div>
+        </form>
+      </section>
+
+      <section class="panel">
+        <div class="panel-title"><div><h2>Диагностика</h2><p>Проверка конфигурации и обновление базы знаний без перезапуска.</p></div></div>
+        <div class="action-row">
+          <button id="selfTestButton" type="button">Проверить конфигурацию</button>
+          <button id="reloadKbButton" class="secondary" type="button">Перезагрузить базу знаний</button>
+          <button id="refreshButton" class="secondary" type="button">Обновить метрики</button>
+        </div>
+        <pre id="diagnosticsOutput">Диагностика ещё не запускалась.</pre>
+      </section>
+    </section>
+  </main>
+  <script src="/admin.js" defer></script>
+</body>
+</html>
