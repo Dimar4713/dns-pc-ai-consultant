@@ -189,11 +189,11 @@ reloadKbButton.addEventListener('click', async () => {
 
 updateLinksButton.addEventListener('click', async () => {
   updateLinksButton.disabled = true;
-  diagnosticsOutput.textContent = 'Проверяю ссылки DNS. Это может занять несколько минут…';
+  diagnosticsOutput.textContent = 'Добавляю поисковые fallback-ссылки DNS по названию модели или артикулу…';
   try {
     const result = await api('/api/admin/update-links', { method: 'POST' });
     diagnosticsOutput.textContent = JSON.stringify(result.report, null, 2);
-    showBanner(`Проверено ${result.report.checked}; обновлено ${result.report.updated}; требуют проверки ${result.report.unresolved}.`, result.report.errors > 0);
+    showBanner(`Просмотрено ${result.report.scanned}; добавлено ${result.report.enriched}; уже подготовлено ${result.report.alreadyPrepared}; без названия ${result.report.unresolved}.`, result.report.unresolved > 0);
   } catch (error) {
     diagnosticsOutput.textContent = error.message;
     showBanner(error.message, true);
