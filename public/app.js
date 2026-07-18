@@ -343,12 +343,20 @@ form.addEventListener('submit', async (event) => {
         }
 
         const token = json.choices?.[0]?.delta?.content;
+        const reasoningToken = json.choices?.[0]?.delta?.reasoning;
+
         if (token) {
           fullText += token;
           bubble.className = 'message assistant';
           const html = parseMarkdown(fullText);
           bubble.innerHTML = html || escapeHtml(fullText);
           chat.scrollTop = chat.scrollHeight;
+        } else if (reasoningToken && !fullText) {
+          // Модель в фазе рассуждений — показываем анимированный прогресс
+          if (!bubble.dataset.reasoning) {
+            bubble.dataset.reasoning = '1';
+            bubble.innerHTML = '<span class="spinner" aria-hidden="true"></span><span class="reasoning-label">Анализирую запрос…</span>';
+          }
         }
       }
     }

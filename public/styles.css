@@ -149,6 +149,11 @@ button, input, select, textarea { font: inherit; }
   to { transform: rotate(360deg); }
 }
 
+.reasoning-label {
+  color: var(--muted);
+  font-style: italic;
+}
+
 .detail-btn {
   display: inline-flex;
   align-items: center;
