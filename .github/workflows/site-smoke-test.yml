@@ -1,0 +1,279 @@
+name: External site smoke test
+
+on:
+  pull_request:
+    branches:
+      - dns-pc-ai-consultant
+    paths:
+      - .github/workflows/site-smoke-test.yml
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  smoke-test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    env:
+      BASE_URL: https://dimar4713-dns-pc-ai-consultant-83de.twc1.net
+      SESSION_ID: github-smoke-${{ github.run_id }}-${{ github.run_attempt }}
+
+    steps:
+      - name: Run external HTTP and AI tests
+        shell: bash
+        run: |
+          set -Eeuo pipefail
+          mkdir -p smoke-report
+
+          python3 <<'PY'
+          import json
+          import os
+          import ssl
+          import sys
+          import time
+          import urllib.error
+          import urllib.request
+          from pathlib import Path
+
+          base = os.environ['BASE_URL'].rstrip('/')
+          session_id = os.environ['SESSION_ID']
+          out_dir = Path('smoke-report')
+          out_dir.mkdir(exist_ok=True)
+
+          checks = []
+          failures = []
+          details = []
+
+          def record(name, ok, detail=''):
+              checks.append((name, ok, detail))
+              if not ok:
+                  failures.append(f'{name}: {detail}')
+
+          def request(path, method='GET', body=None, headers=None, timeout=120):
+              url = base + path
+              req_headers = {'User-Agent': 'GitHub-Actions-Smoke-Test/1.0'}
+              if headers:
+                  req_headers.update(headers)
+              data = None
+              if body is not None:
+                  data = json.dumps(body, ensure_ascii=False).encode('utf-8')
+                  req_headers.setdefault('Content-Type', 'application/json; charset=utf-8')
+              req = urllib.request.Request(url, data=data, headers=req_headers, method=method)
+              started = time.perf_counter()
+              try:
+                  with urllib.request.urlopen(req, timeout=timeout, context=ssl.create_default_context()) as resp:
+                      raw = resp.read()
+                      elapsed = time.perf_counter() - started
+                      return resp.status, {k.lower(): v for k, v in resp.headers.items()}, raw, elapsed
+              except urllib.error.HTTPError as exc:
+                  raw = exc.read()
+                  elapsed = time.perf_counter() - started
+                  return exc.code, {k.lower(): v for k, v in exc.headers.items()}, raw, elapsed
+
+          # 1. Main page and security headers
+          try:
+              status, headers, raw, elapsed = request('/')
+              html = raw.decode('utf-8', errors='replace')
+              (out_dir / 'index.html').write_text(html, encoding='utf-8')
+              record('Главная страница HTTP 200', status == 200, f'HTTP {status}, {elapsed:.2f} с')
+              record('Интерфейс консультанта найден', 'AI-консультант по сборке ПК' in html, f'размер HTML {len(raw)} байт')
+              required_headers = {
+                  'x-content-type-options': 'nosniff',
+                  'x-frame-options': 'DENY',
+                  'referrer-policy': 'strict-origin-when-cross-origin',
+                  'content-security-policy': None,
+              }
+              for key, expected in required_headers.items():
+                  actual = headers.get(key)
+                  ok = actual is not None and (expected is None or actual == expected)
+                  record(f'Заголовок безопасности {key}', ok, f'значение: {actual!r}')
+              record('Express не раскрывается через X-Powered-By', 'x-powered-by' not in headers, f'значение: {headers.get("x-powered-by")!r}')
+              details.append(f'- Главная страница: HTTP {status}, время {elapsed:.2f} с, размер {len(raw)} байт.')
+          except Exception as exc:
+              record('Главная страница доступна', False, repr(exc))
+
+          # 2. Health endpoint
+          health = {}
+          try:
+              status, headers, raw, elapsed = request('/api/health')
+              (out_dir / 'health.json').write_bytes(raw)
+              health = json.loads(raw.decode('utf-8'))
+              record('/api/health HTTP 200', status == 200, f'HTTP {status}, {elapsed:.2f} с')
+              record('Health ok=true', health.get('ok') is True, json.dumps(health, ensure_ascii=False))
+              record('AI-сервис готов', health.get('serviceReady') is True, f'serviceReady={health.get("serviceReady")}')
+              record('База знаний загружена', bool(health.get('knowledgeFiles')) and int(health.get('knowledgeSections') or 0) > 0, f'files={health.get("knowledgeFiles")}, sections={health.get("knowledgeSections")}')
+              details.append(f'- Health: serviceReady={health.get("serviceReady")}, разделов базы знаний: {health.get("knowledgeSections")}')
+          except Exception as exc:
+              record('/api/health корректен', False, repr(exc))
+
+          # 3. Public configuration
+          public_config = {}
+          try:
+              status, headers, raw, elapsed = request('/api/public-config', headers={'X-Session-Id': session_id})
+              (out_dir / 'public-config.json').write_bytes(raw)
+              public_config = json.loads(raw.decode('utf-8'))
+              record('/api/public-config HTTP 200', status == 200, f'HTTP {status}, {elapsed:.2f} с')
+              record('Публичный доступ разрешён', public_config.get('accessible') is True, json.dumps(public_config, ensure_ascii=False))
+              record('Публичная конфигурация видит готовый сервис', public_config.get('serviceReady') is True, f'serviceReady={public_config.get("serviceReady")}')
+              details.append(f'- Публичный режим: {public_config.get("publicMode")}; доступно сообщений в тестовой сессии: {public_config.get("limits", {}).get("remainingSession")}')
+          except Exception as exc:
+              record('/api/public-config корректен', False, repr(exc))
+
+          # 4. Real non-streaming AI request
+          answer = ''
+          try:
+              prompt = (
+                  'Подбери сбалансированный игровой ПК до 120 000 рублей для Full HD 144 Гц. '
+                  'Укажи процессор, видеокарту, материнскую плату, оперативную память, SSD, блок питания и корпус. '
+                  'Проверь совместимость компонентов и оцени итоговый бюджет.'
+              )
+              status, headers, raw, elapsed = request(
+                  '/api/chat',
+                  method='POST',
+                  body={'messages': [{'role': 'user', 'content': prompt}]},
+                  headers={'Accept': 'application/json', 'X-Session-Id': session_id},
+                  timeout=180,
+              )
+              (out_dir / 'chat-response.json').write_bytes(raw)
+              payload = json.loads(raw.decode('utf-8'))
+              answer = str(payload.get('answer') or '')
+              (out_dir / 'chat-answer.md').write_text(answer, encoding='utf-8')
+              record('Обычный запрос к /api/chat HTTP 200', status == 200, f'HTTP {status}, {elapsed:.2f} с; payload={json.dumps(payload, ensure_ascii=False)[:500]}')
+              record('Консультант вернул содержательный ответ', len(answer) >= 300, f'длина ответа {len(answer)} символов')
+              record('Ответ содержит структуру сборки', sum(word.lower() in answer.lower() for word in ['процессор', 'видеокарт', 'материн', 'памят', 'ssd', 'блок питания']) >= 4, answer[:500])
+              details.append(f'- Обычный AI-запрос: HTTP {status}, полный ответ за {elapsed:.2f} с, длина {len(answer)} символов.')
+          except Exception as exc:
+              record('Обычный AI-запрос выполнен', False, repr(exc))
+
+          # 5. Real SSE streaming request
+          try:
+              prompt = (
+                  'Проверь совместимость связки Ryzen 5 7500F, плата B650, RTX 4070 Super и блок питания 650 Вт. '
+                  'Назови возможные риски и дай краткий итог.'
+              )
+              url = base + '/api/chat'
+              req = urllib.request.Request(
+                  url,
+                  data=json.dumps({'messages': [{'role': 'user', 'content': prompt}]}, ensure_ascii=False).encode('utf-8'),
+                  headers={
+                      'User-Agent': 'GitHub-Actions-Smoke-Test/1.0',
+                      'Content-Type': 'application/json; charset=utf-8',
+                      'Accept': 'text/event-stream',
+                      'X-Session-Id': session_id,
+                  },
+                  method='POST',
+              )
+              started = time.perf_counter()
+              chunks = []
+              raw_lines = []
+              first_data_at = None
+              done_received = False
+              with urllib.request.urlopen(req, timeout=180, context=ssl.create_default_context()) as resp:
+                  stream_status = resp.status
+                  stream_type = resp.headers.get('Content-Type', '')
+                  for raw_line in resp:
+                      line = raw_line.decode('utf-8', errors='replace').rstrip('\r\n')
+                      raw_lines.append(line)
+                      if not line.startswith('data: '):
+                          continue
+                      if first_data_at is None:
+                          first_data_at = time.perf_counter()
+                      data = line[6:].strip()
+                      try:
+                          obj = json.loads(data)
+                      except json.JSONDecodeError:
+                          continue
+                      if obj.get('type') == 'done':
+                          done_received = True
+                      delta = obj.get('choices', [{}])[0].get('delta', {}).get('content') if obj.get('choices') else None
+                      if delta:
+                          chunks.append(delta)
+              total = time.perf_counter() - started
+              ttft = (first_data_at - started) if first_data_at else None
+              stream_answer = ''.join(chunks)
+              (out_dir / 'sse-raw.txt').write_text('\n'.join(raw_lines), encoding='utf-8')
+              (out_dir / 'sse-answer.md').write_text(stream_answer, encoding='utf-8')
+              record('SSE-запрос HTTP 200', stream_status == 200, f'HTTP {stream_status}, Content-Type={stream_type!r}')
+              record('SSE Content-Type корректен', 'text/event-stream' in stream_type.lower(), stream_type)
+              record('Получены потоковые фрагменты текста', len(chunks) > 1 and len(stream_answer) >= 100, f'фрагментов {len(chunks)}, длина {len(stream_answer)}')
+              record('Получено завершающее событие done', done_received, f'done={done_received}')
+              details.append(f'- SSE: первый фрагмент через {ttft:.2f} с; весь поток {total:.2f} с; {len(chunks)} текстовых фрагментов.' if ttft is not None else f'- SSE: первый фрагмент не получен; весь запрос {total:.2f} с.')
+          except Exception as exc:
+              record('SSE-поток выполнен', False, repr(exc))
+
+          # 6. Validation errors that must not consume quota
+          try:
+              status, headers, raw, elapsed = request(
+                  '/api/chat',
+                  method='POST',
+                  body={'messages': []},
+                  headers={'Accept': 'application/json', 'X-Session-Id': session_id},
+              )
+              record('Пустой запрос отклоняется HTTP 400', status == 400, f'HTTP {status}; body={raw.decode("utf-8", errors="replace")[:300]}')
+          except Exception as exc:
+              record('Проверка пустого запроса', False, repr(exc))
+
+          try:
+              max_chars = int(public_config.get('limits', {}).get('maxInputChars') or 0)
+              if 0 < max_chars < 12000:
+                  status, headers, raw, elapsed = request(
+                      '/api/chat',
+                      method='POST',
+                      body={'messages': [{'role': 'user', 'content': 'X' * (max_chars + 1)}]},
+                      headers={'Accept': 'application/json', 'X-Session-Id': session_id},
+                  )
+                  record('Слишком длинный запрос отклоняется HTTP 413', status == 413, f'HTTP {status}; лимит {max_chars}')
+              else:
+                  checks.append(('Проверка HTTP 413', True, f'пропущена: maxInputChars={max_chars}, санитарный предел сообщения 12000'))
+          except Exception as exc:
+              record('Проверка слишком длинного запроса', False, repr(exc))
+
+          passed = sum(1 for _, ok, _ in checks if ok)
+          total_checks = len(checks)
+          report = [
+              '# Отчёт внешнего smoke-теста',
+              '',
+              f'**Адрес:** {base}',
+              f'**Результат:** {passed}/{total_checks} проверок пройдено',
+              f'**Статус:** {"PASS" if not failures else "FAIL"}',
+              '',
+              '## Итоги проверок',
+              '',
+          ]
+          for name, ok, detail in checks:
+              report.append(f'- {"✅" if ok else "❌"} **{name}** — {detail}')
+          report.extend(['', '## Производительность и состояние', ''])
+          report.extend(details or ['- Нет данных.'])
+          if answer:
+              report.extend(['', '## Фрагмент ответа консультанта', '', answer[:2000]])
+          if failures:
+              report.extend(['', '## Ошибки', ''])
+              report.extend([f'- {item}' for item in failures])
+          report.append('')
+
+          (out_dir / 'report.md').write_text('\n'.join(report), encoding='utf-8')
+          print('\n'.join(report))
+
+          if failures:
+              sys.exit(1)
+          PY
+
+      - name: Add report to job summary
+        if: always()
+        shell: bash
+        run: |
+          if [ -f smoke-report/report.md ]; then
+            cat smoke-report/report.md >> "$GITHUB_STEP_SUMMARY"
+          else
+            echo '# Smoke-test report was not generated' >> "$GITHUB_STEP_SUMMARY"
+          fi
+
+      - name: Upload smoke-test report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: site-smoke-test-report
+          path: smoke-report/
+          if-no-files-found: warn
+          retention-days: 14
