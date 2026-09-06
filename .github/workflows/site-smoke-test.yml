@@ -1,3 +1,4 @@
+# Post-transfer smoke trigger: AIMETON organization ownership acceptance 2026-09-06
 name: External site smoke test
 
 on:
